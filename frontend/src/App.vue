@@ -59,10 +59,6 @@
     <transition name="route-fade" mode="out-in" v-else>
       <router-view />
     </transition>
-    <!-- 演示入口（开发时使用） -->
-    <div style="position:fixed;bottom:18px;left:18px;z-index:2000;">
-      <router-link to="/font-demo" style="background:rgba(164,179,179,0.12);padding:8px 12px;border-radius:8px;border:1px solid rgba(164,179,179,0.2);color:#667;">Font Demo</router-link>
-    </div>
   </div>
 </template>
 
