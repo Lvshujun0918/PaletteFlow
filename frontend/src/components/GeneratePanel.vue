@@ -1,7 +1,7 @@
 <template>
   <div class="generate-panel">
     <div class="input-section">
-      <label for="prompt-input" class="label">描述你想要的配色 (例如: 温暖的秋色调、现代科技蓝)</label>
+      <label for="prompt-input" class="label">描述你想要的配色：</label>
       <textarea
         id="prompt-input"
         v-model="prompt"
@@ -17,7 +17,7 @@
       @click="handleGenerate"
       :disabled="loading || prompt.trim() === ''"
     >
-      <span v-if="!loading">✨ 生成配色</span>
+      <span v-if="!loading">生成配色</span>
       <span v-else>正在生成中...</span>
     </button>
 
@@ -87,8 +87,19 @@ export default {
 .generate-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  height: 100%;
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  width: 100%;
+  padding: 3.5rem 3.5rem;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .input-section {
@@ -130,7 +141,7 @@ export default {
 
 .generate-btn {
   padding: 14px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff9900 0%, #ffe100 100%);
   color: white;
   border: none;
   border-radius: 8px;
