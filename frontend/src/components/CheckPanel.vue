@@ -2,7 +2,7 @@
   <div class="check-panel">
     <!-- 对比度检查 -->
     <div class="check-section">
-      <h3>📊 对比度检查</h3>
+      <h3>对比度检查</h3>
       <div class="color-pair-selector">
         <div class="selector-group">
           <label>颜色1:</label>

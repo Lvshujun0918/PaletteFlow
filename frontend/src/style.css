@@ -19,11 +19,18 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #252b47 0%, #5f2698 100%);
   color: white;
   padding: 30px 20px;
   text-align: center;
@@ -86,3 +93,38 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* 页面切换过渡（增强版：更明显的渐变、位移、缩放和模糊） */
+.route-fade-enter-active, .route-fade-leave-active {
+  transition: opacity 600ms cubic-bezier(.22,.9,.31,1),
+              transform 600ms cubic-bezier(.22,.9,.31,1),
+              filter 600ms cubic-bezier(.22,.9,.31,1);
+}
+.route-fade-enter-from, .route-fade-leave-to {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+  filter: blur(6px) saturate(0.9);
+}
+.route-fade-enter-to, .route-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0) saturate(1);
+}
+
+/* 显眼的渐变叠加层（短时高不透明度，然后淡出） */
+.route-fade-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(118,75,162,0.18), rgba(102,126,234,0.18));
+  opacity: 0;
+  transition: opacity 240ms ease-in;
+  z-index: 9999;
+}
+/* 使用 JS 或在需要时将 .show 添加到 .route-fade-overlay 来显式触发；下面是自动在 enter-active 时短暂显示的近似实现 */
+.route-fade-enter-active + .route-fade-overlay,
+.route-fade-leave-active + .route-fade-overlay {
+  opacity: 1;
+}
+
+/* 备用：如果伪元素方案失效，可在页面根添加一个 overlay 元素并切换类名 */
