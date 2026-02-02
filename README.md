@@ -1,6 +1,10 @@
-# 🎨 AI配色生成器
+<p align="center">
+  <img src="https://github.com/Lvshujun0918/PaletteFlow/blob/main/frontend/src/assets/logo.png?raw=true" alt="PaletteFlow Logo" width="80" height="80" style="border-radius: 16px;"/>
+  <h1 align="center">PaletteFlow</h1>
+  <p align="center" style="color: #666; font-size: 16px;">配色，易如反掌</p>
+</p>
 
-一个集成真实AI的Web应用，使用自然语言生成完美配色方案。前端本地处理对比度检查和色盲模拟，支持Docker单容器部署。
+PaletteFlow利用人工智能技术，快速生成美观、和谐的配色方案。输入简单描述，即可获得专业级调色板及色彩代码，支持导出多种格式。适合设计师、开发者和创意工作者使用。
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Go](https://img.shields.io/badge/go-1.25+-blue.svg)
