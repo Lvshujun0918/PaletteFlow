@@ -221,7 +221,6 @@ export default {
   opacity: 1;
 }
 
-/* 主内容容器 - 半透明Docker效果 */
 .main-content {
   display: flex;
   flex-direction: column;
@@ -234,6 +233,7 @@ export default {
   text-align: center;
   animation: float 6s ease-in-out infinite;
   justify-content: space-between;
+  min-height: 450px;
 }
 
 @keyframes float {
@@ -241,7 +241,6 @@ export default {
   50% { transform: translateY(-10px); }
 }
 
-/* Logo样式 */
 .logo-container {
   animation: fadeInDown 1s ease;
   width: 110px;
