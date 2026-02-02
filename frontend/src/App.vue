@@ -31,15 +31,15 @@
 
       <!-- 进入主页面按钮 -->
       <div class="button-container">
-        <button 
-          class="enter-button" 
+        <GlassButton
+          class="enter-button"
           @click="enterMainPage"
           @mouseenter="hoverButton = true"
           @mouseleave="hoverButton = false"
         >
           <span class="button-text">{{ buttonText }}</span>
           <span class="button-icon">→</span>
-        </button>
+        </GlassButton>
       </div>
 
       <!-- 底部Slogan -->
@@ -70,9 +70,13 @@ import bg3 from './assets/bg3.png'
 import bg4 from './assets/bg4.png'
 import bg5 from './assets/bg5.png'
 import logo from './assets/logo.png'
+import GlassButton from './components/GlassButton.vue'
 
 export default {
   name: 'App',
+  components: {
+    GlassButton
+  },
   data() {
     return {
 
@@ -300,44 +304,8 @@ export default {
   position: relative;
   padding: 1.2rem 3.5rem;
   font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  background: #a8b5c8;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
   gap: 1rem;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(157, 179, 199, 0.25);
-  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.4s ease;
-}
-
-.enter-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
-}
-
-.enter-button:hover {
-  background: #96a9c1;
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(157, 179, 199, 0.35);
-  letter-spacing: 1px;
-}
-
-.enter-button:hover::before {
-  left: 100%;
-}
-
-.enter-button:active {
-  transform: translateY(-1px);
 }
 
 .button-icon {

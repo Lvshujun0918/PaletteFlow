@@ -12,14 +12,15 @@
       <div class="char-count">{{ prompt.length }} / 500</div>
     </div>
 
-    <button
+    <GlassButton
       class="generate-btn"
+      :loading="loading"
+      :disabled="prompt.trim() === ''"
       @click="handleGenerate"
-      :disabled="loading || prompt.trim() === ''"
     >
       <span v-if="!loading">生成配色</span>
       <span v-else>正在生成中...</span>
-    </button>
+    </GlassButton>
 
     <!-- 快速模板 -->
     <div class="templates">
@@ -40,9 +41,13 @@
 
 <script>
 import { ref } from 'vue'
+import GlassButton from './GlassButton.vue'
 
 export default {
   name: 'GeneratePanel',
+  components: {
+    GlassButton
+  },
   props: {
     loading: {
       type: Boolean,
@@ -132,31 +137,8 @@ export default {
 }
 
 .generate-btn {
-  padding: 14px 24px;
-  background: var(--glass-cta);
-  color: white;
-  border: none;
-  border-radius: 999px;
   font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: var(--glass-cta-shadow);
-}
-
-.generate-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(37, 99, 235, 0.35);
-  background: var(--glass-cta-hover);
-}
-
-.generate-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.generate-btn:active:not(:disabled) {
-  transform: translateY(0);
+  padding: 14px 24px;
 }
 
 .templates {

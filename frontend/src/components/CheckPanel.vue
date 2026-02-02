@@ -20,7 +20,7 @@
             </option>
           </select>
         </div>
-        <button class="check-btn" @click="performContrastCheck">检查对比度</button>
+        <GlassButton class="check-btn" @click="performContrastCheck">检查对比度</GlassButton>
       </div>
 
       <!-- 对比度结果 -->
@@ -67,7 +67,7 @@
     <!-- 色盲检查 -->
     <div class="check-section">
       <h3>色盲检查</h3>
-      <button class="check-btn" @click="performColorblindCheck">检查色盲友好性</button>
+      <GlassButton class="check-btn" @click="performColorblindCheck">检查色盲友好性</GlassButton>
 
       <!-- 色盲结果 -->
       <div v-if="colorblindResult" class="colorblind-result">
@@ -110,6 +110,7 @@
 
 <script>
 import { ref, watch } from 'vue'
+import GlassButton from './GlassButton.vue'
 import { notify } from '../utils/notify'
 import {
   getContrastRatio,
@@ -122,6 +123,9 @@ import {
 
 export default {
   name: 'CheckPanel',
+  components: {
+    GlassButton
+  },
   props: {
     colors: {
       type: Array,
@@ -309,21 +313,7 @@ export default {
 
 .check-btn {
   padding: 8px 16px;
-  background: var(--glass-cta);
-  color: white;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-  white-space: nowrap;
-  box-shadow: var(--glass-cta-shadow);
-}
-
-.check-btn:hover {
-  background: var(--glass-cta-hover);
-  transform: translateY(-1px);
 }
 
 .result-card {

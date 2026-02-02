@@ -29,18 +29,22 @@
 
     <!-- 快速操作 -->
     <div class="quick-actions">
-      <button class="action-btn cta-btn" @click="exportAsCSS">导出CSS</button>
-      <button class="action-btn cta-btn" @click="exportAsJSON">导出JSON</button>
-      <button class="action-btn cta-btn" @click="exportAsImage">导出图片</button>
+      <GlassButton class="action-btn" @click="exportAsCSS">导出CSS</GlassButton>
+      <GlassButton class="action-btn" @click="exportAsJSON">导出JSON</GlassButton>
+      <GlassButton class="action-btn" @click="exportAsImage">导出图片</GlassButton>
     </div>
   </div>
 </template>
 
 <script>
 import { notify } from '../utils/notify'
+import GlassButton from './GlassButton.vue'
 
 export default {
   name: 'ColorDisplay',
+  components: {
+    GlassButton
+  },
   props: {
     colors: {
       type: Array,
@@ -246,24 +250,7 @@ export default {
   flex: 1;
   min-width: 100px;
   padding: 10px 15px;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-  white-space: nowrap;
-}
-
-.cta-btn {
-  background: var(--glass-cta);
-  box-shadow: var(--glass-cta-shadow);
-}
-
-.cta-btn:hover {
-  background: var(--glass-cta-hover);
-  transform: translateY(-1px);
 }
 
 .action-btn:active {

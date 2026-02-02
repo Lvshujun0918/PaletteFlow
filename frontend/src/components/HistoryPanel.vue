@@ -27,15 +27,20 @@
           <div class="history-time">{{ formatTime(item.timestamp) }}</div>
         </div>
 
-        <button class="select-btn glass-pill">选择</button>
+        <GlassButton class="select-btn" variant="ghost">选择</GlassButton>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import GlassButton from './GlassButton.vue'
+
 export default {
   name: 'HistoryPanel',
+  components: {
+    GlassButton
+  },
   props: {
     histories: {
       type: Array,
@@ -151,22 +156,8 @@ export default {
 
 .select-btn {
   padding: 6px 12px;
-  background: var(--glass-cta);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
   font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
   flex-shrink: 0;
-  box-shadow: var(--glass-cta-shadow);
-}
-
-.select-btn:hover {
-  background: var(--glass-cta-hover);
-  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
