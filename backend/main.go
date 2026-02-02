@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"runtime/debug"
 
 	"ai-color-palette/config"
 	"ai-color-palette/handler"
@@ -11,6 +12,12 @@ import (
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC] %v", r)
+			debug.PrintStack()
+		}
+	}()
 	log.Println("8888888b.          888          888    888            8888888888 888                        ")
 	log.Println("888   Y88b         888          888    888            888        888                        ")
 	log.Println("888    888         888          888    888            888        888                        ")
@@ -22,6 +29,7 @@ func main() {
 	log.Println("                                                                                            ")
 	// 加载配置
 	config.LoadConfig()
+	log.Println("[INFO] Config loaded")
 	// 设置Gin为发布模式
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
@@ -31,10 +39,12 @@ func main() {
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
 	router.Use(cors.New(config))
-	// 健康检查
 	router.GET("/api/health", handler.HealthHandler)
-	// 生成配色方案API
 	router.POST("/api/generate-palette", handler.GeneratePaletteHandler)
-	log.Println("[INFO] GIN Server starting on :8080")
-	router.Run(":8080")
+	log.Println("[INFO] GIN Server ready")
+	log.Println("[INFO] GIN Server starting on :5208")
+	if err := router.Run(":5208"); err != nil {
+		log.Fatalf("[FATAL] Server failed: %v", err)
+	}
+	log.Println("[INFO] Bind Ready")
 }
