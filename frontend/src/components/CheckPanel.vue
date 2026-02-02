@@ -24,7 +24,7 @@
       </div>
 
       <!-- 对比度结果 -->
-      <div v-if="contrastResult" class="result-card">
+      <div v-if="contrastResult" class="result-card glass-card">
         <div class="preview-row">
           <div
             class="color-preview"
@@ -295,11 +295,11 @@ export default {
 
 .selector-group select {
   padding: 8px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 6px;
   font-size: 0.9rem;
   cursor: pointer;
-  background: white;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .selector-group select:focus {
@@ -332,8 +332,6 @@ export default {
 }
 
 .result-card {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 15px;
   margin-top: 10px;
@@ -363,7 +361,7 @@ export default {
   justify-content: space-between;
   font-size: 0.95rem;
   padding: 8px;
-  background: white;
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 4px;
 }
 

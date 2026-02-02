@@ -10,7 +10,7 @@
       <div
         v-for="item in histories"
         :key="item.id"
-        class="history-item"
+        class="history-item glass-card"
         @click="selectHistory(item)"
       >
         <div class="history-colors">
@@ -27,7 +27,7 @@
           <div class="history-time">{{ formatTime(item.timestamp) }}</div>
         </div>
 
-        <button class="select-btn">选择</button>
+        <button class="select-btn glass-pill">选择</button>
       </div>
     </div>
   </div>
@@ -103,8 +103,6 @@ export default {
   display: flex;
   gap: 12px;
   padding: 12px;
-  background: white;
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -152,8 +150,8 @@ export default {
 
 .select-btn {
   padding: 6px 12px;
-  background: #667eea;
-  color: white;
+  background: rgba(255, 255, 255, 0.6);
+  color: #1f2937;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -165,7 +163,7 @@ export default {
 }
 
 .select-btn:hover {
-  background: #764ba2;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 @media (max-width: 768px) {

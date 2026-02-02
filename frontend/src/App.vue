@@ -12,9 +12,9 @@
     </div>
 
     <!-- 主内容容器 -->
-    <div class="main-content">
+    <div class="main-content glass-surface">
       <!-- Logo -->
-      <div class="logo-container">
+      <div class="logo-container glass-card">
         <img 
           :src="logoUrl" 
           alt="Logo" 
@@ -224,14 +224,6 @@ export default {
   max-width: 800px;
   width: 90%;
   padding: 5rem 3.5rem;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
   animation: float 6s ease-in-out infinite;
 }
@@ -254,19 +246,11 @@ export default {
   align-items: center;
   margin-left: auto;
   margin-right: auto;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo-container:hover {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 

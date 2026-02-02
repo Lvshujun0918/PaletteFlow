@@ -2,7 +2,7 @@
   <div class="color-display">
     <!-- 配色卡片网格 -->
     <div class="color-cards">
-      <div v-for="(color, index) in colors" :key="index" class="color-card" @click="copyToClipboard(color)">
+      <div v-for="(color, index) in colors" :key="index" class="color-card glass-card" @click="copyToClipboard(color)">
         <div class="color-preview" :style="{ backgroundColor: color }"></div>
         <div class="color-info">
           <div class="color-code">{{ color }}</div>
@@ -12,7 +12,7 @@
     </div>
 
     <!-- 配色信息 -->
-    <div class="palette-info">
+    <div class="palette-info glass-card">
       <div class="info-item">
         <span class="label">提示词:</span>
         <span class="value">{{ prompt }}</span>
@@ -29,9 +29,9 @@
 
     <!-- 快速操作 -->
     <div class="quick-actions">
-      <button class="action-btn" @click="exportAsCSS">导出CSS</button>
-      <button class="action-btn" @click="exportAsJSON">导出JSON</button>
-      <button class="action-btn" @click="exportAsImage">导出图片</button>
+      <button class="action-btn glass-pill" @click="exportAsCSS">导出CSS</button>
+      <button class="action-btn glass-pill" @click="exportAsJSON">导出JSON</button>
+      <button class="action-btn glass-pill" @click="exportAsImage">导出图片</button>
     </div>
   </div>
 </template>
@@ -156,10 +156,8 @@ export default {
 }
 
 .color-card {
-  background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
@@ -186,7 +184,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  background: white;
 }
 
 .color-code {
@@ -209,10 +206,8 @@ export default {
 }
 
 .palette-info {
-  background: white;
   border-radius: 8px;
   padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 }
 
@@ -249,27 +244,18 @@ export default {
   flex: 1;
   min-width: 100px;
   padding: 10px 15px;
-  color: white;
+  color: #1f2937;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
   transition: background 0.3s;
   white-space: nowrap;
-
-  background: #667eea;
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .action-btn:hover {
-  background: #7aa8f8;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .action-btn:active {

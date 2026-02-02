@@ -28,7 +28,7 @@
         <button
           v-for="template in templates"
           :key="template"
-          class="template-btn"
+          class="template-btn glass-pill"
           @click="selectTemplate(template)"
         >
           {{ template }}
@@ -108,13 +108,14 @@ export default {
 .input-textarea {
   flex: 1;
   padding: 15px;
-  border: 2px solid #e0e0e0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 8px;
   font-family: inherit;
   font-size: 1rem;
   resize: none;
   transition: border-color 0.3s;
   min-height: 120px;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .input-textarea:focus {
@@ -174,8 +175,8 @@ export default {
 
 .template-btn {
   padding: 10px 15px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -184,9 +185,9 @@ export default {
 }
 
 .template-btn:hover {
-  background: #f0f0f0;
-  border-color: #667eea;
-  color: #667eea;
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #3b82f6;
 }
 
 .template-btn:active {

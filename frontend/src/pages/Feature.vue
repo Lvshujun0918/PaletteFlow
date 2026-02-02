@@ -1,7 +1,7 @@
 <template>
   <div class="background-container" :style="{ background: currentBackground }">
-    <div class="container">
-      <div class="header">
+    <div class="container glass-surface">
+      <div class="header glass-panel">
         <div class="logo-container">
           <img :src="logoUrl" alt="Logo" class="logo" @error="handleLogoError">
         </div>
@@ -13,13 +13,13 @@
 
       <div class="main-content">
         <!-- 左侧：配色显示面板 -->
-        <div class="panel panel-left">
+        <div class="panel panel-left glass-panel">
           <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
             @notify="showNotification" />
         </div>
 
         <!-- 右侧：功能面板 -->
-        <div class="panel panel-right">
+        <div class="panel panel-right glass-panel">
           <!-- Tab切换 -->
           <div class="tabs">
             <button v-for="tab in tabs" :key="tab" :class="['tab-btn', { active: activeTab === tab }]"
@@ -227,29 +227,8 @@ export default {
   z-index: 0;
 }
 
-.glass-effect {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
 /* 修改 .container 样式，移除背景相关属性 */
 .container {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -268,12 +247,6 @@ export default {
   background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   color: rgb(80, 76, 76);
   padding: 20px;
@@ -336,59 +309,41 @@ export default {
   overflow: hidden;
 }
 
-.panel-left {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-.panel-right {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 24px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
 .tabs {
   display: flex;
-  background: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 4px;
+  gap: 6px;
   flex-shrink: 0;
+  border-radius: 16px;
+  margin: 12px 12px 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .tab-btn {
   flex: 1;
-  padding: 12px 20px;
+  padding: 12px 18px;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1rem;
-  color: #666;
+  font-size: 0.98rem;
+  color: var(--glass-muted);
   transition: all 0.3s;
-  border-bottom: 3px solid transparent;
-  font-weight: 500;
+  border-radius: 12px;
+  font-weight: 600;
 }
 
 .tab-btn:hover {
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .tab-btn.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-  background: #f9f9ff;
+  color: #2b6cb0;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.16);
 }
 
 .tab-content {
