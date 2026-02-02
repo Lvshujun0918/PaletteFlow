@@ -57,9 +57,9 @@ export default {
   methods: {
     copyToClipboard(color) {
       navigator.clipboard.writeText(color).then(() => {
-        this.$emit('notify', { message: `已复制: ${color}`, type: 'success' })
+        this.$emit('notify', `已复制: ${color}`)
       }).catch(() => {
-        this.$emit('notify', { message: '复制失败', type: 'error' })
+        this.$emit('notify', '复制失败')
       })
     },
     formatTime(timestamp) {
