@@ -121,7 +121,7 @@ func attemptGenerateColorPalette(prompt string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
-
+	log.Printf("[INFO] AI input messages: %s", jsonData)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.AITimeout)*time.Second)
 	defer cancel()
 
