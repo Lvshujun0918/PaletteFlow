@@ -65,8 +65,34 @@ type ToolFunction struct {
 	Parameters  map[string]interface{} `json:"parameters"`
 }
 
-// GenerateColorPalette 使用AI生成配色方案
+// GenerateColorPalette 使用AI生成配色方案，支持3次重试
 func GenerateColorPalette(prompt string) ([]string, error) {
+	const maxRetries = 3
+	var lastErr error
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		log.Printf("[INFO] Attempting to generate palette (attempt %d/%d)", attempt, maxRetries)
+
+		colors, err := attemptGenerateColorPalette(prompt)
+		if err == nil {
+			return colors, nil
+		}
+
+		lastErr = err
+		log.Printf("[WARN] Attempt %d failed: %v", attempt, err)
+
+		// 如果还有重试次数，等待后重试
+		if attempt < maxRetries {
+			time.Sleep(time.Second * time.Duration(attempt))
+		}
+	}
+
+	log.Printf("[ERROR] Failed to generate palette after %d attempts", maxRetries)
+	return nil, fmt.Errorf("all %d retry attempts failed, last error: %w", maxRetries, lastErr)
+}
+
+// attemptGenerateColorPalette 单次尝试生成配色
+func attemptGenerateColorPalette(prompt string) ([]string, error) {
 	cfg := config.AppConfig
 	if cfg.AIAPIKey == "" {
 		return nil, fmt.Errorf("AI API key not configured")
@@ -165,7 +191,7 @@ func GenerateColorPalette(prompt string) ([]string, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("[ERROR] AI Tool Call Failed: no tool_calls and no parsable colors in content")
+	return nil, fmt.Errorf("AI Tool Call Failed: no tool_calls and no parsable colors in content")
 }
 
 // extractColors 从AI响应中提取HEX颜色代码
