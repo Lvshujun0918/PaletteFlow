@@ -25,6 +25,10 @@
         <span class="label">颜色数量:</span>
         <span class="value">{{ colors.length }} 个</span>
       </div>
+      <div class="info-item advice-item">
+        <span class="label">使用建议:</span>
+        <span class="value advice-text">{{ advice || '暂无建议' }}</span>
+      </div>
     </div>
 
     <!-- 快速操作 -->
@@ -57,6 +61,10 @@ export default {
     timestamp: {
       type: Number,
       default: 0
+    },
+    advice: {
+      type: String,
+      default: ''
     }
   },
   methods: {
@@ -85,7 +93,8 @@ export default {
       const data = {
         prompt: this.prompt,
         colors: this.colors,
-        timestamp: this.timestamp
+        timestamp: this.timestamp,
+        advice: this.advice
       }
 
       this.downloadFile(
@@ -237,6 +246,15 @@ export default {
 .value {
   color: #333;
   word-break: break-all;
+}
+
+.advice-item {
+  align-items: flex-start;
+}
+
+.advice-text {
+  line-height: 1.5;
+  text-align: right;
 }
 
 .quick-actions {
