@@ -98,7 +98,14 @@ func attemptGenerateColorPalette(prompt string) ([]string, error) {
 		return nil, fmt.Errorf("AI API key not configured")
 	}
 
-	systemPrompt := `你是一个专业的配色设计师。用户会给你一个配色需求描述，你需要返回5个精确的HEX颜色代码。`
+	systemPrompt := `
+	你是一个专业的配色设计师。用户会给你一个配色需求描述，你需要返回5个精确的HEX颜色代码。
+	1. 采用【渐变过渡技巧】，在冲突色之间创建中间色调缓冲层
+	2. 运用【色彩比例法则】：主色占60%，次色占30%，点缀色占10%
+	3. 建立【色彩秩序】：通过明度阶梯（从20%到80%亮度）建立视觉节奏
+	4. 添加【中性调和剂】：适当加入平衡色
+	5. 最终效果需呈现【动态和谐】- 既有视觉冲击力，又保持整体统一性
+	`
 
 	userPrompt := fmt.Sprintf("请你帮我生成这样的配色：%s", prompt)
 
