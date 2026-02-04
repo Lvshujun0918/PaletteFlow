@@ -234,6 +234,10 @@ export default {
   font-size: 0.95rem;
 }
 
+.info-item>.label {
+  flex-shrink: 0;
+}
+
 .info-item:last-child {
   border-bottom: none;
 }
