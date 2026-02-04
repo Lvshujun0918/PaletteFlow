@@ -16,7 +16,8 @@
       <div class="main-content">
         <!-- 左侧：配色显示面板 -->
         <div class="panel panel-left glass-panel">
-          <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp" />
+          <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
+            :advice="currentAdvice" />
         </div>
 
         <!-- 右侧：功能面板 -->
@@ -91,6 +92,7 @@ export default {
     ])
     const currentPrompt = ref('默认配色方案')
     const currentTimestamp = ref(Date.now())
+    const currentAdvice = ref('')
     const histories = ref([])
 
     // 计算属性：动态背景
@@ -131,13 +133,15 @@ export default {
         currentColors.value = response.data.colors
         currentPrompt.value = prompt
         currentTimestamp.value = response.data.timestamp * 1000
+        currentAdvice.value = response.data.advice || ''
 
         // 保存到历史记录
         const newHistory = {
           id: Date.now(),
           prompt: prompt,
           colors: response.data.colors,
-          timestamp: response.data.timestamp
+          timestamp: response.data.timestamp,
+          advice: response.data.advice || ''
         }
 
         histories.value.unshift(newHistory)
@@ -163,6 +167,7 @@ export default {
       currentColors.value = item.colors
       currentPrompt.value = item.prompt
       currentTimestamp.value = item.timestamp * 1000
+      currentAdvice.value = item.advice || ''
       activeTab.value = 'generate'
       notify('已加载历史配色', 'success')
     }
@@ -199,6 +204,7 @@ export default {
       currentPrompt,
       currentBackground,
       currentTimestamp,
+      currentAdvice,
       histories,
       handleGenerate,
       handleSelectHistory,
