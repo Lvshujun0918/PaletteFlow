@@ -17,7 +17,7 @@
         <!-- 左侧：配色显示面板 -->
         <div class="panel panel-left glass-panel">
           <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
-            :advice="currentAdvice" />
+            :advice="currentAdvice" @regenerate="handleRegenerate" />
         </div>
 
         <!-- 右侧：功能面板 -->
@@ -179,6 +179,16 @@ export default {
       notify('已加载历史配色', 'success')
     }
 
+    const handleRegenerate = () => {
+      if (!currentColors.value || currentColors.value.length === 0) {
+        notify('请先生成配色方案', 'warning')
+        return
+      }
+      const colorsText = currentColors.value.join('、')
+      const newPrompt = `对${colorsText}颜色不满意，请按照${currentPrompt.value}重新生成配色方案`
+      handleGenerate(newPrompt)
+    }
+
     const handleCheckContrast = () => {
       activeTab.value = 'check'
       notify('已切换到对比度检查', 'info')
@@ -215,6 +225,7 @@ export default {
       histories,
       handleGenerate,
       handleSelectHistory,
+      handleRegenerate,
       handleCheckContrast,
       handleCheckColorblind,
       notify

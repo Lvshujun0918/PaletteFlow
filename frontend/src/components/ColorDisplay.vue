@@ -33,6 +33,7 @@
 
     <!-- 快速操作 -->
     <div class="quick-actions">
+      <GlassButton class="action-btn" @click="requestRegenerate">不满意，重新生成</GlassButton>
       <GlassButton class="action-btn" @click="exportAsCSS">导出CSS</GlassButton>
       <GlassButton class="action-btn" @click="exportAsJSON">导出JSON</GlassButton>
       <GlassButton class="action-btn" @click="exportAsImage">导出图片</GlassButton>
@@ -49,6 +50,7 @@ export default {
   components: {
     GlassButton
   },
+  emits: ['regenerate'],
   props: {
     colors: {
       type: Array,
@@ -146,6 +148,13 @@ export default {
       a.download = filename
       a.click()
       URL.revokeObjectURL(url)
+    },
+    requestRegenerate() {
+      if (!this.colors || this.colors.length === 0) {
+        notify('请先生成配色方案', 'warning')
+        return
+      }
+      this.$emit('regenerate')
     }
   }
 }
