@@ -112,6 +112,13 @@ export default {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
           histories.value = JSON.parse(stored)
+          if (histories.value.length > 0) {
+            const latest = histories.value[0]
+            currentColors.value = latest.colors || []
+            currentPrompt.value = latest.prompt || '默认配色方案'
+            currentTimestamp.value = (latest.timestamp || Date.now()) * 1000
+            currentAdvice.value = latest.advice || ''
+          }
         }
       } catch (error) {
         console.error('加载历史记录失败:', error)
