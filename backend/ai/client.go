@@ -89,7 +89,7 @@ func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt
 
 	systemPrompt := buildSingleColorSystemPrompt()
 	userPrompt := fmt.Sprintf(
-		"现有配色（顺序固定）为：%s。仅替换第%d个颜色 %s，依据用户的新需求：%s。保持其余颜色不变，返回新的完整5色方案及使用建议。",
+		"现有配色（顺序固定）为：%s。仅替换第%d个颜色 %s，依据用户的新需求：%s，同时注意与其余颜色的协调性。保持其余颜色不变，返回新的完整5色方案及使用建议。",
 		strings.Join(normalized, ", "),
 		targetIndex+1,
 		normalized[targetIndex],
