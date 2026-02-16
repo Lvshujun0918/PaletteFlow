@@ -83,7 +83,7 @@
             <div class="chat-input">
               <div v-if="singleColorHex" class="selected-color-tip">
                 <span class="selected-color-dot" :style="{ backgroundColor: singleColorHex }"></span>
-                <span class="selected-color-text">已选颜色 {{ singleColorHex }} （已填入输入框，可直接修改提示词）</span>
+                <span class="selected-color-text">已选颜色 {{ singleColorHex }} 进行微调，请输入你的调整需求</span>
               </div>
               <textarea v-model="chatInput" class="input-textarea" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
@@ -102,7 +102,7 @@
         <!-- 右侧：配色显示面板 -->
         <div class="panel panel-right glass-panel">
           <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
-            :advice="currentAdvice" @regenerate="handleRegenerate" />
+            :advice="currentAdvice" @regenerate="handleRegenerate" @pick-color="handlePickColorFromDisplay" />
           <div class="quick-actions-panel" :class="{ collapsed: !isQuickActionsOpen }">
             <button class="action-header" @click="toggleQuickActions">
               <span>快捷指令</span>
@@ -296,6 +296,14 @@ export default {
       singleColorMode.value = true
       isQuickActionsOpen.value = true
       notify(`已选中颜色 ${target}，提示词已填入左侧输入框，可编辑后在右侧执行单色重生成`, 'info')
+    }
+
+    const handlePickColorFromDisplay = (index) => {
+      if (!currentColors.value || currentColors.value.length !== 5) {
+        notify('当前配色数量异常，无法选择单色重生成', 'warning')
+        return
+      }
+      handlePickColorFromChat([...currentColors.value], index)
     }
 
     const handleGenerate = async (prompt) => {
@@ -589,6 +597,7 @@ export default {
       handleSingleColorRegenerate,
       handleSendPrompt,
       handlePickColorFromChat,
+      handlePickColorFromDisplay,
       insertQuickInput,
       toggleQuickActions,
       handleShowHistory,

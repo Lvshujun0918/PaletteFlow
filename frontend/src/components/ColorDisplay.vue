@@ -6,7 +6,10 @@
         <div class="color-preview" :style="{ backgroundColor: color }"></div>
         <div class="color-info">
           <div class="color-code">{{ color }}</div>
-          <button class="copy-btn" title="复制颜色值">📋</button>
+          <div class="color-actions">
+            <button class="copy-btn" title="复制颜色值">📋</button>
+            <button class="pick-btn" title="选中该色进行单色重生成" @click.stop="emitPickColor(index)">🎯</button>
+          </div>
         </div>
       </div>
     </div>
@@ -49,7 +52,7 @@ export default {
   components: {
     GlassButton
   },
-  emits: ['regenerate'],
+  emits: ['regenerate', 'pick-color'],
   props: {
     colors: {
       type: Array,
@@ -69,6 +72,9 @@ export default {
     }
   },
   methods: {
+        emitPickColor(index) {
+          this.$emit('pick-color', index)
+        },
     copyToClipboard(color) {
       navigator.clipboard.writeText(color).then(() => {
         notify(`已复制: ${color}`, 'success')
@@ -219,6 +225,25 @@ export default {
 
 .copy-btn:hover {
   transform: scale(1.2);
+}
+
+.color-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pick-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 5px;
+  transition: transform 0.2s;
+}
+
+.pick-btn:hover {
+  transform: scale(1.15);
 }
 
 .palette-info {
