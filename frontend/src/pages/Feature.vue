@@ -14,34 +14,113 @@
       </div>
 
       <div class="main-content">
-        <!-- 左侧：配色显示面板 -->
+        <!-- 左侧：对话面板 -->
         <div class="panel panel-left glass-panel">
-          <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
-            :advice="currentAdvice" @regenerate="handleRegenerate" />
+          <div class="chat-container">
+            <div class="chat-header">配色对话助手</div>
+
+            <div class="chat-messages">
+              <div v-for="message in chatMessages" :key="message.id" class="chat-message" :class="message.role">
+                <div class="chat-bubble" :class="message.role">
+                  <div v-if="message.type === 'text'">{{ message.content }}</div>
+
+                  <template v-else-if="message.type === 'palette'">
+                    <div class="palette-summary">
+                      <div class="palette-title">已生成配色</div>
+                      <div class="palette-colors">
+                        <span v-for="(color, index) in message.payload.colors" :key="index" class="palette-chip"
+                          :style="{ backgroundColor: color }" :title="color"></span>
+                      </div>
+                      <div class="palette-text">提示词：{{ message.payload.prompt }}</div>
+                      <div class="palette-text">使用建议：{{ message.payload.advice || '暂无建议' }}</div>
+                    </div>
+                  </template>
+
+                  <template v-else-if="message.type === 'history'">
+                    <div class="history-list">
+                      <div class="palette-title">历史记录</div>
+                      <button v-for="item in message.payload" :key="item.id" class="history-item"
+                        @click="handleSelectHistory(item)">
+                        <span class="history-prompt">{{ item.prompt }}</span>
+                        <span class="history-time">{{ formatTime(item.timestamp * 1000) }}</span>
+                      </button>
+                    </div>
+                  </template>
+
+                  <template v-else-if="message.type === 'contrast'">
+                    <div class="palette-summary">
+                      <div class="palette-title">对比度检查结果</div>
+                      <div class="contrast-preview">
+                        <span class="palette-chip" :style="{ backgroundColor: message.payload.color1 }"></span>
+                        <span class="palette-chip" :style="{ backgroundColor: message.payload.color2 }"></span>
+                      </div>
+                      <div class="palette-text">对比度：{{ message.payload.ratio.toFixed(2) }}:1</div>
+                      <div class="palette-text">等级：{{ message.payload.level }}</div>
+                      <div class="palette-text">评分：{{ message.payload.score.toFixed(1) }}/100</div>
+                    </div>
+                  </template>
+
+                  <template v-else-if="message.type === 'colorblind'">
+                    <div class="palette-summary">
+                      <div class="palette-title">色盲检查结果</div>
+                      <div class="colorblind-block" v-for="type in colorblindTypes" :key="type.key">
+                        <div class="palette-text">{{ type.name }}</div>
+                        <div class="palette-colors">
+                          <span v-for="(color, index) in message.payload[type.key]" :key="index"
+                            class="palette-chip" :style="{ backgroundColor: color }"></span>
+                        </div>
+                      </div>
+                      <div class="palette-text">
+                        {{ message.payload.isAccessible ? '✅ 配色对色盲友好' : '❌ 建议调整以改善色盲可访问性' }}
+                      </div>
+                      <div class="palette-text">改进建议：{{ message.payload.recommendations.join('；') }}</div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-actions">
+              <div class="action-row">
+                <GlassButton class="chat-action" @click="handleShowHistory">查看历史</GlassButton>
+                <GlassButton class="chat-action" @click="handleRegenerate">不满意，重生成</GlassButton>
+              </div>
+              <div class="action-row">
+                <div class="selector-group">
+                  <label>颜色1</label>
+                  <select v-model="selectedColor1">
+                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
+                  </select>
+                </div>
+                <div class="selector-group">
+                  <label>颜色2</label>
+                  <select v-model="selectedColor2">
+                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
+                  </select>
+                </div>
+                <GlassButton class="chat-action" @click="handleContrastCheck">对比度检查</GlassButton>
+              </div>
+              <div class="action-row">
+                <GlassButton class="chat-action" @click="handleColorblindCheck">色盲检查</GlassButton>
+              </div>
+            </div>
+
+            <div class="chat-input">
+              <textarea v-model="chatInput" class="input-textarea" placeholder="输入你的配色需求..."
+                @keydown.ctrl.enter="handleSendPrompt"></textarea>
+              <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
+                @click="handleSendPrompt">
+                <span v-if="!loading">发送</span>
+                <span v-else>生成中...</span>
+              </GlassButton>
+            </div>
+          </div>
         </div>
 
-        <!-- 右侧：功能面板 -->
+        <!-- 右侧：配色显示面板 -->
         <div class="panel panel-right glass-panel">
-          <!-- Tab切换 -->
-          <div class="tabs">
-            <button v-for="tab in tabs" :key="tab" :class="['tab-btn', { active: activeTab === tab }]"
-              @click="activeTab = tab">
-              {{ tab === 'generate' ? '生成配色' : tab === 'history' ? '历史记录' : '检查工具' }}
-            </button>
-          </div>
-
-          <!-- Tab内容 -->
-          <div class="tab-content">
-            <!-- 生成配色 Tab -->
-            <GeneratePanel v-if="activeTab === 'generate'" :loading="loading" @generate="handleGenerate" />
-
-            <!-- 检查工具 Tab -->
-            <CheckPanel v-if="activeTab === 'check'" :colors="currentColors" @check-contrast="handleCheckContrast"
-              @check-colorblind="handleCheckColorblind" />
-
-            <!-- 历史记录 Tab -->
-            <HistoryPanel v-if="activeTab === 'history'" :histories="histories" @select="handleSelectHistory" />
-          </div>
+          <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
+            :advice="currentAdvice" @regenerate="handleRegenerate" />
         </div>
       </div>
 
@@ -54,12 +133,18 @@
 <script>
 import { ref, onMounted, computed } from 'vue'
 import ColorDisplay from '../components/ColorDisplay.vue'
-import GeneratePanel from '../components/GeneratePanel.vue'
-import CheckPanel from '../components/CheckPanel.vue'
-import HistoryPanel from '../components/HistoryPanel.vue'
 import Notification from '../components/Notification.vue'
+import GlassButton from '../components/GlassButton.vue'
 import { generatePalette, healthCheck } from '../utils/api'
 import { notify } from '../utils/notify'
+import {
+  getContrastRatio,
+  getContrastLevel,
+  simulateDeuteranopia,
+  simulateProtanopia,
+  simulateTritanopia,
+  simulateAchromatopsia
+} from '../utils/colorUtils'
 import logo from '../assets/logo.png'
 
 const STORAGE_KEY = 'ai_color_palette_history'
@@ -69,10 +154,8 @@ export default {
   name: 'App',
   components: {
     ColorDisplay,
-    GeneratePanel,
-    CheckPanel,
-    HistoryPanel,
-    Notification
+    Notification,
+    GlassButton
   },
   data() {
     return {
@@ -80,8 +163,6 @@ export default {
     }
   },
   setup() {
-    const activeTab = ref('generate')
-    const tabs = ['generate', 'check', 'history']
     const loading = ref(false)
     const currentColors = ref([
       '#ffc2c2',
@@ -94,6 +175,23 @@ export default {
     const currentTimestamp = ref(Date.now())
     const currentAdvice = ref('')
     const histories = ref([])
+    const chatInput = ref('')
+    const chatMessages = ref([
+      {
+        id: Date.now(),
+        role: 'assistant',
+        type: 'text',
+        content: '你好！描述你的配色需求，我会生成配色并提供使用建议。'
+      }
+    ])
+    const selectedColor1 = ref('')
+    const selectedColor2 = ref('')
+    const colorblindTypes = [
+      { key: 'deuteranopia', name: '红绿色盲 (Deuteranopia)' },
+      { key: 'protanopia', name: '红绿色弱 (Protanopia)' },
+      { key: 'tritanopia', name: '蓝黄色盲 (Tritanopia)' },
+      { key: 'achromatopsia', name: '完全色盲 (Achromatopsia)' }
+    ]
 
     // 计算属性：动态背景
     const currentBackground = computed(() => {
@@ -133,6 +231,22 @@ export default {
       }
     }
 
+    const addChatMessage = (role, type, content, payload = null) => {
+      chatMessages.value.push({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        role,
+        type,
+        content,
+        payload
+      })
+    }
+
+    const formatTime = (timestamp) => {
+      if (!timestamp) return '未知'
+      const date = new Date(timestamp)
+      return date.toLocaleString('zh-CN')
+    }
+
     const handleGenerate = async (prompt) => {
       loading.value = true
       try {
@@ -162,9 +276,15 @@ export default {
         saveHistoriesToStorage()
 
         notify('配色生成成功！', 'success')
+        addChatMessage('assistant', 'palette', '', {
+          colors: response.data.colors,
+          prompt,
+          advice: response.data.advice || ''
+        })
       } catch (error) {
         console.error('生成配色失败:', error)
         notify('生成配色失败，请重试', 'error')
+        addChatMessage('assistant', 'text', '生成失败了，请稍后再试。')
       } finally {
         loading.value = false
       }
@@ -175,8 +295,12 @@ export default {
       currentPrompt.value = item.prompt
       currentTimestamp.value = item.timestamp * 1000
       currentAdvice.value = item.advice || ''
-      activeTab.value = 'generate'
       notify('已加载历史配色', 'success')
+      addChatMessage('assistant', 'palette', '', {
+        colors: item.colors,
+        prompt: item.prompt,
+        advice: item.advice || ''
+      })
     }
 
     const handleRegenerate = () => {
@@ -186,17 +310,92 @@ export default {
       }
       const colorsText = currentColors.value.join('、')
       const newPrompt = `对${colorsText}颜色不满意，请按照${currentPrompt.value}重新生成配色方案`
+      addChatMessage('user', 'text', newPrompt)
       handleGenerate(newPrompt)
     }
 
-    const handleCheckContrast = () => {
-      activeTab.value = 'check'
-      notify('已切换到对比度检查', 'info')
+    const handleSendPrompt = () => {
+      const prompt = chatInput.value.trim()
+      if (!prompt) return
+      addChatMessage('user', 'text', prompt)
+      chatInput.value = ''
+      handleGenerate(prompt)
     }
 
-    const handleCheckColorblind = () => {
-      activeTab.value = 'check'
-      notify('已切换到色盲检查', 'info')
+    const handleShowHistory = () => {
+      if (histories.value.length === 0) {
+        addChatMessage('assistant', 'text', '暂无历史记录，先生成一次配色吧。')
+        return
+      }
+      addChatMessage('assistant', 'history', '', histories.value)
+    }
+
+    const handleContrastCheck = () => {
+      if (!selectedColor1.value || !selectedColor2.value) {
+        notify('请选择两个颜色进行对比度检查', 'warning')
+        return
+      }
+      const ratio = getContrastRatio(selectedColor1.value, selectedColor2.value)
+      const level = getContrastLevel(ratio)
+      addChatMessage('assistant', 'contrast', '', {
+        color1: selectedColor1.value,
+        color2: selectedColor2.value,
+        ratio,
+        level,
+        score: (ratio / 21) * 100
+      })
+    }
+
+    const getMinContrast = (palette) => {
+      if (!palette || palette.length < 2) return 0
+      let min = Infinity
+      for (let i = 0; i < palette.length; i += 1) {
+        for (let j = i + 1; j < palette.length; j += 1) {
+          const ratio = getContrastRatio(palette[i], palette[j])
+          min = Math.min(min, ratio)
+        }
+      }
+      return min === Infinity ? 0 : min
+    }
+
+    const buildRecommendations = (minContrast) => {
+      const recommendations = []
+      if (minContrast < 4.5) {
+        recommendations.push('提高明度差或增加饱和度对比')
+        recommendations.push('避免相近色相的组合，拉开色相距离')
+      }
+      if (minContrast < 3) {
+        recommendations.push('优先使用高对比度的浅色与深色搭配')
+      }
+      if (recommendations.length === 0) {
+        recommendations.push('当前配色对色盲用户较友好，可继续使用')
+      }
+      return recommendations
+    }
+
+    const handleColorblindCheck = () => {
+      if (!currentColors.value || currentColors.value.length === 0) {
+        notify('请先生成配色方案', 'warning')
+        return
+      }
+      const deuteranopia = currentColors.value.map(simulateDeuteranopia)
+      const protanopia = currentColors.value.map(simulateProtanopia)
+      const tritanopia = currentColors.value.map(simulateTritanopia)
+      const achromatopsia = currentColors.value.map(simulateAchromatopsia)
+      const minContrast = Math.min(
+        getMinContrast(deuteranopia),
+        getMinContrast(protanopia),
+        getMinContrast(tritanopia),
+        getMinContrast(achromatopsia)
+      )
+      addChatMessage('assistant', 'colorblind', '', {
+        deuteranopia,
+        protanopia,
+        tritanopia,
+        achromatopsia,
+        isAccessible: minContrast >= 4.5,
+        recommendations: buildRecommendations(minContrast)
+      })
     }
 
     onMounted(async () => {
@@ -211,11 +410,13 @@ export default {
 
       // 从localStorage加载历史记录
       loadHistoriesFromStorage()
+      if (currentColors.value && currentColors.value.length > 0) {
+        selectedColor1.value = currentColors.value[0]
+        selectedColor2.value = currentColors.value[1] || currentColors.value[0]
+      }
     })
 
     return {
-      activeTab,
-      tabs,
       loading,
       currentColors,
       currentPrompt,
@@ -223,11 +424,19 @@ export default {
       currentTimestamp,
       currentAdvice,
       histories,
+      chatInput,
+      chatMessages,
+      selectedColor1,
+      selectedColor2,
+      colorblindTypes,
       handleGenerate,
       handleSelectHistory,
       handleRegenerate,
-      handleCheckContrast,
-      handleCheckColorblind,
+      handleSendPrompt,
+      handleShowHistory,
+      handleContrastCheck,
+      handleColorblindCheck,
+      formatTime,
       notify
     }
   }
@@ -322,50 +531,167 @@ export default {
   min-height: 0;
 }
 
-
-
-.tabs {
+.chat-container {
   display: flex;
-  background: rgba(255, 255, 255, 0.4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 4px;
-  gap: 6px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  margin: 12px 12px 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+  padding: 16px;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 12px 18px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.98rem;
-  color: var(--glass-muted);
-  transition: all 0.3s;
-  border-radius: 12px;
+.chat-header {
   font-weight: 600;
+  color: #2d3748;
+  font-size: 1.1rem;
 }
 
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.tab-btn.active {
-  color: #2b6cb0;
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.16);
-}
-
-.tab-content {
+.chat-messages {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 6px;
 }
 
-.tab-content>div {
-  padding: 20px;
+.chat-message {
+  display: flex;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-message.assistant {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #2d3748;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.chat-bubble.user {
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.palette-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.palette-title {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.palette-colors {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.palette-chip {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.palette-text {
+  font-size: 0.88rem;
+  color: #4a5568;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.history-prompt {
+  font-size: 0.9rem;
+  color: #2d3748;
+}
+
+.history-time {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.chat-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.chat-action {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+}
+
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.selector-group select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.chat-input {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.chat-input .input-textarea {
+  flex: 1;
+  min-height: 80px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  resize: none;
+}
+
+.send-btn {
+  padding: 10px 18px;
+  font-size: 0.95rem;
 }
 
 .logo-container {
@@ -425,12 +751,8 @@ export default {
     font-size: 2rem;
   }
 
-  .tabs {
-    flex-wrap: wrap;
-  }
-
-  .tab-btn {
-    flex: 1 1 calc(33.333% - 10px);
+  .chat-input {
+    flex-direction: column;
   }
 }
 
@@ -444,18 +766,8 @@ export default {
     transform: scale(0.8);
   }
 
-  .tab-content {
-    padding: 15px;
-  }
-
-  .tabs {
-    gap: 0;
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 10px 12px;
-    font-size: 0.9rem;
+  .chat-bubble {
+    max-width: 100%;
   }
 }
 </style>
