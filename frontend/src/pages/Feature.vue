@@ -187,7 +187,7 @@ export default {
         id: Date.now(),
         role: 'assistant',
         type: 'text',
-        content: '你好！描述你的配色需求，我会生成配色并提供使用建议。'
+        content: '你好！我是“PaletteFlow”智能体。描述你的配色需求，我会生成配色并提供使用建议。'
       }
     ])
     const selectedColor1 = ref('')
