@@ -67,6 +67,7 @@
                         <div class="palette-text">{{ type.name }}</div>
                         <div class="palette-colors">
                           <span v-for="(color, index) in message.payload[type.key]" :key="index"
+                      clearSingleColorMode,
                             class="palette-chip" :style="{ backgroundColor: color }"></span>
                         </div>
                       </div>
@@ -82,8 +83,12 @@
 
             <div class="chat-input">
               <div v-if="singleColorHex" class="selected-color-tip">
-                <span class="selected-color-dot" :style="{ backgroundColor: singleColorHex }"></span>
-                <span class="selected-color-text">已选颜色 {{ singleColorHex }} 进行微调，请输入你的调整需求</span>
+                <div class="selected-color-left">
+                  <span class="selected-color-dot" :style="{ backgroundColor: singleColorHex }"></span>
+                  <span class="selected-color-text">已选颜色 {{ singleColorHex }} 进行微调，请输入你的调整需求</span>
+                </div>
+                <button type="button" class="selected-color-close" title="退出单色微调"
+                  @click="clearSingleColorMode">✕</button>
               </div>
               <textarea v-model="chatInput" class="input-textarea" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
@@ -129,22 +134,6 @@
                   </select>
                 </div>
                 <div class="selector-hint">选择颜色后输入“对比度检查”</div>
-              </div>
-              <div class="single-color-panel">
-                <div class="single-color-header">
-                  <div class="single-color-title">单色微调</div>
-                  <div v-if="singleColorHex" class="single-color-preview" :style="{ backgroundColor: singleColorHex }">
-                    {{ singleColorHex }}
-                  </div>
-                  <div v-else class="single-color-placeholder">从左侧点击颜色以选中</div>
-                </div>
-                <input v-model="singleColorPrompt" class="single-color-input"
-                  placeholder="针对选中颜色输入提示，例如：更亮一些、更科技感" />
-                <GlassButton class="single-color-btn" :loading="loadingSingle" :disabled="loadingSingle || !singleColorHex"
-                  @click="handleSingleColorRegenerate">
-                  <span v-if="!loadingSingle">单色重生成</span>
-                  <span v-else>生成中...</span>
-                </GlassButton>
               </div>
             </div>
           </div>
@@ -275,6 +264,15 @@ export default {
       })
     }
 
+    const clearSingleColorMode = () => {
+      singleColorHex.value = ''
+      singleColorPrompt.value = ''
+      singleColorMode.value = false
+      singleColorIndex.value = 0
+      singleColorBase.value = []
+      chatInput.value = ''
+    }
+
     const formatTime = (timestamp) => {
       if (!timestamp) return '未知'
       const date = new Date(timestamp)
@@ -295,7 +293,7 @@ export default {
       chatInput.value = singleColorPrompt.value
       singleColorMode.value = true
       isQuickActionsOpen.value = true
-      notify(`已选中颜色 ${target}，提示词已填入左侧输入框，可编辑后在右侧执行单色重生成`, 'info')
+      notify(`已选中颜色 ${target} 进行单独调整，请输入调整提示词吧`, 'info')
     }
 
     const handlePickColorFromDisplay = (index) => {
@@ -576,6 +574,7 @@ export default {
 
     return {
       loading,
+      clearSingleColorMode,
       currentColors,
       currentPrompt,
       currentBackground,
@@ -970,6 +969,7 @@ export default {
 .selected-color-tip {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -977,6 +977,14 @@ export default {
   border: 1px solid rgba(37, 99, 235, 0.18);
   color: #1e3a8a;
   font-size: 0.9rem;
+}
+
+.selected-color-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .selected-color-dot {
@@ -988,6 +996,25 @@ export default {
 
 .selected-color-text {
   flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.selected-color-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 4px 6px;
+  color: #1e3a8a;
+  border-radius: 6px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.selected-color-close:hover {
+  background: rgba(37, 99, 235, 0.12);
+  transform: scale(1.05);
 }
 
 .chat-input .input-textarea {
