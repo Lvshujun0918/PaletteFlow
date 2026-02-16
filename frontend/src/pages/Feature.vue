@@ -31,8 +31,7 @@
                         <span v-for="(color, index) in message.payload.colors" :key="index" class="palette-chip"
                           :style="{ backgroundColor: color }" :title="color"></span>
                       </div>
-                      <div class="palette-text">提示词：{{ message.payload.prompt }}</div>
-                      <div class="palette-text">使用建议：{{ message.payload.advice || '暂无建议' }}</div>
+                      <div class="palette-text">详细信息请查看右侧配色面板</div>
                     </div>
                   </template>
 
@@ -80,39 +79,17 @@
               </div>
             </div>
 
-            <div class="chat-actions">
-              <div class="action-row">
-                <GlassButton class="chat-action" @click="insertQuickInput('查看历史记录')">查看历史</GlassButton>
-                <GlassButton class="chat-action" @click="insertQuickInput('不满意，重新生成')">不满意，重生成</GlassButton>
-              </div>
-              <div class="action-row">
-                <div class="selector-group">
-                  <label>颜色1</label>
-                  <select v-model="selectedColor1">
-                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
-                  </select>
-                </div>
-                <div class="selector-group">
-                  <label>颜色2</label>
-                  <select v-model="selectedColor2">
-                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
-                  </select>
-                </div>
-                <GlassButton class="chat-action" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
-              </div>
-              <div class="action-row">
-                <GlassButton class="chat-action" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
-              </div>
-            </div>
-
             <div class="chat-input">
               <textarea v-model="chatInput" class="input-textarea" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
-              <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
-                @click="handleSendPrompt">
-                <span v-if="!loading">发送</span>
-                <span v-else>生成中...</span>
-              </GlassButton>
+              <div class="input-footer">
+                <div class="input-tip">示例：温暖秋色调 / 科技感蓝色 / 适合网页仪表盘</div>
+                <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
+                  @click="handleSendPrompt">
+                  <span v-if="!loading">发送</span>
+                  <span v-else>生成中...</span>
+                </GlassButton>
+              </div>
             </div>
           </div>
         </div>
@@ -121,6 +98,30 @@
         <div class="panel panel-right glass-panel">
           <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
             :advice="currentAdvice" @regenerate="handleRegenerate" />
+          <div class="quick-actions-panel">
+            <div class="action-header">快捷指令</div>
+            <div class="action-row">
+              <button class="action-chip" @click="insertQuickInput('查看历史记录')">查看历史</button>
+              <button class="action-chip" @click="insertQuickInput('不满意，重新生成')">不满意，重生成</button>
+              <button class="action-chip" @click="insertQuickInput('对比度检查')">对比度检查</button>
+              <button class="action-chip" @click="insertQuickInput('色盲检查')">色盲检查</button>
+            </div>
+            <div class="action-row selector-row">
+              <div class="selector-group">
+                <label>颜色1</label>
+                <select v-model="selectedColor1">
+                  <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
+                </select>
+              </div>
+              <div class="selector-group">
+                <label>颜色2</label>
+                <select v-model="selectedColor2">
+                  <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
+                </select>
+              </div>
+              <div class="selector-hint">选择颜色后输入“对比度检查”</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -556,8 +557,8 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 16px;
-  padding: 16px;
+  gap: 14px;
+  padding: 18px;
 }
 
 .chat-header {
@@ -572,7 +573,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-right: 6px;
+  padding: 6px 6px 2px 0;
 }
 
 .chat-message {
@@ -661,22 +662,56 @@ export default {
   color: #718096;
 }
 
-.chat-actions {
+.quick-actions-panel {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  margin: 0 16px 16px;
 }
 
 .action-row {
-  display: flex;
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
   align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.action-header {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.action-chip {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.8);
+  color: #2d3748;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+}
+
+.selector-row {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .chat-action {
-  padding: 8px 14px;
-  font-size: 0.9rem;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  border-radius: 999px;
+  min-height: 38px;
 }
 
 .selector-group {
@@ -685,34 +720,55 @@ export default {
   gap: 4px;
   font-size: 0.85rem;
   color: #4a5568;
+  min-width: 120px;
 }
 
 .selector-group select {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.3);
   background: rgba(255, 255, 255, 0.7);
 }
 
+.selector-hint {
+  font-size: 0.82rem;
+  color: #718096;
+}
+
 .chat-input {
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .chat-input .input-textarea {
   flex: 1;
-  min-height: 80px;
-  padding: 12px;
-  border-radius: 12px;
+  min-height: 160px;
+  padding: 14px 16px;
+  border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   resize: none;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .send-btn {
-  padding: 10px 18px;
+  padding: 12px 22px;
   font-size: 0.95rem;
+  min-height: 42px;
+}
+
+.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.input-tip {
+  font-size: 0.85rem;
+  color: #718096;
 }
 
 .logo-container {
