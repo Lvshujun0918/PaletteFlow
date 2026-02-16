@@ -102,7 +102,7 @@
             <div class="action-header">快捷指令</div>
             <div class="action-row">
               <button class="action-chip" @click="insertQuickInput('查看历史记录')">查看历史</button>
-              <button class="action-chip" @click="insertQuickInput('不满意，重新生成')">不满意，重生成</button>
+              <button class="action-chip" @click="insertQuickInput('不满意，重新生成')">重新生成</button>
               <button class="action-chip" @click="insertQuickInput('对比度检查')">对比度检查</button>
               <button class="action-chip" @click="insertQuickInput('色盲检查')">色盲检查</button>
             </div>
