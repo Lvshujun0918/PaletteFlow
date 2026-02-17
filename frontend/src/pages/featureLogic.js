@@ -41,7 +41,7 @@ export function useFeatureLogic() {
 
   const currentBackground = computed(() => {
     if (!currentColors.value || currentColors.value.length === 0) {
-      return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      return 'linear-gradient(135deg, rgb(255, 194, 194), rgb(255, 224, 194), rgb(254, 255, 214), rgb(217, 255, 204), rgb(185, 249, 255))'
     }
     return `linear-gradient(135deg, ${currentColors.value.join(', ')})`
   })
