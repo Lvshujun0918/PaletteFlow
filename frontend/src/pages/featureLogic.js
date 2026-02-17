@@ -1,5 +1,5 @@
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { healthCheck } from '../utils/api'
 import { notify } from '../utils/notify'
 import {
@@ -140,7 +140,31 @@ export function useFeatureLogic() {
     }
   )
 
+  const persistBeforeLeave = () => {
+    try {
+      storageApi.saveCurrentSession()
+      storageApi.saveHistoriesToStorage()
+    } catch (error) {
+      console.error('离开页面前保存失败:', error)
+    }
+  }
+
+  const handleBeforeUnload = () => {
+    persistBeforeLeave()
+  }
+
+  const handlePageHide = () => {
+    persistBeforeLeave()
+  }
+
+  onBeforeRouteLeave(() => {
+    persistBeforeLeave()
+  })
+
   onMounted(async () => {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handlePageHide)
+
     try {
       await healthCheck()
       notify('连接到服务器成功', 'success')
@@ -174,10 +198,22 @@ export function useFeatureLogic() {
     }
   })
 
+  onBeforeUnmount(() => {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+    window.removeEventListener('pagehide', handlePageHide)
+    persistBeforeLeave()
+  })
+
   const handleLogoError = (event) => {
     if (event?.target) {
       event.target.style.display = 'none'
     }
+  }
+
+  const confirmStartNewConversation = () => {
+    const confirmed = window.confirm('确认新建对话吗？当前未保存的上下文可能会丢失。')
+    if (!confirmed) return
+    sessionApi.startNewConversation()
   }
 
   return {
@@ -187,6 +223,7 @@ export function useFeatureLogic() {
     savedSessions,
     clearSingleColorMode: sessionApi.clearSingleColorMode,
     startNewConversation: sessionApi.startNewConversation,
+    confirmStartNewConversation,
     restoreConversation: sessionApi.restoreConversation,
     loadSession: sessionApi.loadSession,
     deleteSession: sessionApi.deleteSession,

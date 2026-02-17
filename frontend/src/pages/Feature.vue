@@ -17,7 +17,16 @@
         <!-- 左侧：对话面板 -->
         <div class="panel panel-left glass-panel">
           <div class="chat-container">
-            <div class="chat-header">配色对话助手<p v-if="currentSessionTheme" class="session-theme-title">主题：{{ currentSessionTheme }}</p></div>
+            <div class="chat-header">
+              <div class="chat-header-main">
+                配色对话助手
+                <p v-if="currentSessionTheme" class="session-theme-title">主题：{{ currentSessionTheme }}</p>
+              </div>
+              <div class="chat-header-actions">
+                <button class="chat-header-btn" @click="confirmStartNewConversation"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48"><g fill="none" stroke="#333333" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M19 10V7a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v22a2 2 0 0 1-2 2h-4"/><rect width="24" height="24" x="5" y="18" rx="2"/><path d="M17 25v10m-5-5h10"/></g></svg></button>
+                <button class="chat-header-btn" @click="handleShowHistory"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M12 21q-3.45 0-6.012-2.287T3.05 13H5.1q.35 2.6 2.313 4.3T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H9v2H3V4h2v2.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m2.8-4.8L11 12.4V7h2v4.6l3.2 3.2z"/></svg></button>
+              </div>
+            </div>
 
             <div class="chat-messages">
               <div v-for="message in chatMessages" :key="message.id" class="chat-message" :class="message.role">
@@ -169,7 +178,7 @@
           </div>
 
           <div class="session-choice-actions">
-            <button class="session-btn primary full-width" @click="startNewConversation">
+            <button class="session-btn primary full-width" @click="confirmStartNewConversation">
               <span>+</span> 开始新一轮配色
             </button>
           </div>
@@ -301,9 +310,45 @@ export default {
 }
 
 .chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   font-weight: 600;
   color: #2d3748;
   font-size: 1.1rem;
+}
+
+.chat-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chat-header-btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.8);
+  color: #2d3748;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-header-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 .session-choice-overlay {
