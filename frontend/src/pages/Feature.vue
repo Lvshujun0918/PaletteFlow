@@ -37,17 +37,6 @@
                     </div>
                   </template>
 
-                  <template v-else-if="message.type === 'history'">
-                    <div class="history-list">
-                      <div class="palette-title">历史记录</div>
-                      <button v-for="item in message.payload" :key="item.id" class="history-item"
-                        @click="handleSelectHistory(item)">
-                        <span class="history-prompt">{{ item.prompt }}</span>
-                        <span class="history-time">{{ formatTime(item.timestamp * 1000) }}</span>
-                      </button>
-                    </div>
-                  </template>
-
                   <template v-else-if="message.type === 'contrast'">
                     <div class="palette-summary">
                       <div class="palette-title">对比度检查结果</div>
@@ -342,10 +331,28 @@ export default {
       try {
         const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
         if (stored) {
-          savedSessions.value = JSON.parse(stored)
+          // 增加解析的健壮性
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) {
+            savedSessions.value = parsed.map(s => ({
+              ...s,
+              messages: Array.isArray(s.messages) ? s.messages : []
+            }))
+          }
         }
       } catch (e) {
         console.error('加载历史会话失败', e)
+        savedSessions.value = []
+      }
+    }
+
+    const cloneMessages = (messages) => {
+      if (!Array.isArray(messages)) return []
+      try {
+        return JSON.parse(JSON.stringify(messages))
+      } catch (error) {
+        console.error('复制对话记录失败:', error)
+        return [...messages]
       }
     }
 
@@ -353,21 +360,21 @@ export default {
       // 只有在已经建立了会话ID时保存
       if (!currentSessionId.value) return
 
-      // 查找或创建会话对象
-      let session = savedSessions.value.find(s => s.id === currentSessionId.value)
+      // 查找或创建会话对象，使用字符串比较以确保类型安全
+      let session = savedSessions.value.find(s => String(s.id) === String(currentSessionId.value))
       
       const newSessionData = {
-        id: currentSessionId.value,
+        id: session ? session.id : currentSessionId.value, // 如果存在则保持原有ID（可能是数字），否则使用当前ID
         theme: currentSessionTheme.value || '未命名主题',
         timestamp: Date.now(), // 更新最后活动时间
-        colors: currentColors.value || [],
+        colors: currentColors.value ? [...currentColors.value] : [],
         prompt: currentPrompt.value || '',
         advice: currentAdvice.value || '',
-        messages: chatMessages.value || [] // 保存完整对话记录
+        messages: cloneMessages(chatMessages.value) // 保存完整对话记录
       }
 
       if (session) {
-        Object.assign(session, newSessionData)
+        Object.assign(session, newSessionData) // 更新现有对象保持引用
       } else {
         savedSessions.value.unshift(newSessionData)
       }
@@ -382,17 +389,19 @@ export default {
       if (saveToStorage) {
         try {
           localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(savedSessions.value))
+          console.log('保存会话列表：', JSON.stringify(savedSessions.value))
         } catch (e) {
           console.error('保存会话列表失败', e)
         }
       }
     }
 
-    const saveChatMessagesToStorage = () => {
+    const saveChatMessagesToStorage = (startNewSession = false) => {
       try {
+        console.log(CHAT_STORAGE_KEY, "保存消息：", JSON.stringify(chatMessages.value))
         localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages.value))
         // 同时保存会话数据到历史列表
-        if (currentSessionId.value) {
+        if (currentSessionId.value && !startNewSession) {
           saveCurrentSession(true)
         }
       } catch (error) {
@@ -408,7 +417,7 @@ export default {
         content,
         payload
       })
-
+      console.log(CHAT_STORAGE_KEY, "添加消息：", JSON.stringify(chatMessages.value))
       if (chatMessages.value.length > MAX_CHAT_HISTORY) {
         chatMessages.value.splice(0, chatMessages.value.length - MAX_CHAT_HISTORY)
       }
@@ -425,10 +434,7 @@ export default {
     }
 
     const startNewConversation = () => {
-      saveCurrentSession()
       clearSingleColorMode()
-      chatMessages.value = [createWelcomeMessage()]
-      saveChatMessagesToStorage()
       // 重置当前的配色状态为默认值
       currentColors.value = []
       currentPrompt.value = ''
@@ -438,10 +444,34 @@ export default {
       currentSessionTheme.value = ''
       showSessionChoice.value = false
       router.replace('/feature')
+      chatMessages.value = [createWelcomeMessage()]
+      saveChatMessagesToStorage(true)
     }
 
     const restoreConversation = () => {
-      loadChatMessagesFromStorage()
+      // 确保已加载会话列表
+      if (savedSessions.value.length === 0) {
+        loadSessionsFromStorage()
+      }
+
+      // 如果有保存的会话，加载最新的一个
+      if (savedSessions.value.length > 0) {
+        // 确保按时间排序
+        savedSessions.value.sort((a, b) => b.timestamp - a.timestamp)
+        const latest = savedSessions.value[0]
+        loadSessionById(latest.id, { updateRoute: true, notifyUser: false })
+      } else {
+        // 如果没有保存的会话对象，但有聊天记录（异常情况或旧数据），尝试恢复并创建会话
+        loadChatMessagesFromStorage()
+        if (chatMessages.value.length > 1) { // 假设只有welcome时不算
+           // 创建并保存为新会话
+           const newId = Date.now()
+           currentSessionId.value = newId
+           currentSessionTheme.value = '恢复的会话'
+           saveCurrentSession(true)
+           router.replace(`/feature/${newId}`)
+        }
+      }
       showSessionChoice.value = false
     }
 
@@ -491,11 +521,30 @@ export default {
         } else {
           // 新会话或无配色，执行生成
           response = await generatePalette(prompt)
-          currentSessionId.value = Date.now()
+          const newId = Date.now()
+          currentSessionId.value = newId
           currentSessionTheme.value = prompt // 记录第一轮的提示词作为主题
           currentPrompt.value = prompt
-          router.replace(`/feature/${currentSessionId.value}`)
-          console.log('新生成配色，设置会话ID:', currentSessionId.value, '主题:', currentSessionTheme.value)
+          
+          // 显式保存新会话，确保 Watch 触发时能找到记录
+          // 此时 chatMessages 已包含用户的提问
+          const newSession = {
+            id: newId,
+            theme: prompt,
+            timestamp: newId,
+            colors: response.data.colors,
+            prompt: prompt,
+            advice: response.data.advice || '',
+            messages: cloneMessages(chatMessages.value)
+          }
+          savedSessions.value.unshift(newSession)
+          try {
+             localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(savedSessions.value))
+          } catch(e) { console.error(e) }
+
+          // 使用 replace 不会添加历史堆栈，避免后退死循环
+          router.replace(`/feature/${newId}`)
+          console.log('新生成配色，设置会话ID:', newId, '主题:', currentSessionTheme.value)
         }
 
         currentColors.value = response.data.colors
@@ -553,22 +602,6 @@ export default {
       } finally {
         loading.value = false
       }
-    }
-
-    const handleSelectHistory = (item) => {
-      currentColors.value = item.colors
-      currentPrompt.value = item.currentPrompt || item.prompt
-      currentSessionTheme.value = item.prompt // 历史记录的 prompt 字段存的是 theme
-      currentTimestamp.value = item.timestamp * 1000
-      currentAdvice.value = item.advice || ''
-      currentSessionId.value = item.id // 恢复会话上下文
-      notify('已加载历史配色', 'success')
-      addChatMessage('assistant', 'palette', '', {
-        title: '历史配色',
-        colors: item.colors,
-        prompt: item.currentPrompt || item.prompt,
-        advice: item.advice || ''
-      })
     }
 
     const handleRegenerate = () => {
@@ -780,7 +813,9 @@ export default {
 
     const findSessionById = (sessionId) => {
       if (!sessionId) return null
-      return savedSessions.value.find(s => `${s.id}` === `${sessionId}`) || null
+      // 确保能够匹配数字或字符串类型的ID
+      const targetId = String(sessionId)
+      return savedSessions.value.find(s => String(s.id) === targetId) || null
     }
 
     const applySession = (session) => {
@@ -797,7 +832,7 @@ export default {
       const rawTimestamp = session.timestamp || Date.now()
       currentTimestamp.value = rawTimestamp > 1_000_000_000_000 ? rawTimestamp : rawTimestamp * 1000
       chatMessages.value = Array.isArray(session.messages) && session.messages.length > 0
-        ? session.messages
+        ? cloneMessages(session.messages)
         : [createWelcomeMessage()]
 
       if (restoredColors.length > 0) {
@@ -811,6 +846,9 @@ export default {
 
     const loadSessionById = (sessionId, options = {}) => {
       const { updateRoute = false, notifyUser = true } = options
+      if (savedSessions.value.length === 0) {
+        loadSessionsFromStorage()
+      }
       const session = findSessionById(sessionId)
       if (!session) {
         if (notifyUser) notify('未找到该会话', 'warning')
@@ -932,7 +970,6 @@ export default {
       isQuickActionsOpen,
       colorblindTypes,
       handleGenerate,
-      handleSelectHistory,
       handleRegenerate,
       handleSingleColorRegenerate,
       handleSendPrompt,
