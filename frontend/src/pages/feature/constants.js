@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'ai_color_palette_history'
+export const STORAGE_KEY = 'ai_color_palette_ng_history'
 export const CHAT_STORAGE_KEY = 'ai_color_palette_chat_history'
 export const SESSIONS_STORAGE_KEY = 'ai_color_palette_sessions'
 
