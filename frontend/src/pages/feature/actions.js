@@ -260,18 +260,42 @@ export function createActionsApi(deps) {
   }
 
   const handleContrastCheck = () => {
-    if (!selectedColor1.value || !selectedColor2.value) {
-      notify('请选择两个颜色进行对比度检查', 'warning')
+    if (!currentColors.value || currentColors.value.length < 2) {
+      notify('当前颜色不足，无法进行对比度检查', 'warning')
       return
     }
-    const ratio = getContrastRatio(selectedColor1.value, selectedColor2.value)
-    const level = getContrastLevel(ratio)
+
+    const results = []
+    for (let i = 0; i < currentColors.value.length; i += 1) {
+      for (let j = i + 1; j < currentColors.value.length; j += 1) {
+        const color1 = currentColors.value[i]
+        const color2 = currentColors.value[j]
+        const ratio = getContrastRatio(color1, color2)
+        results.push({
+          color1,
+          color2,
+          ratio,
+          level: getContrastLevel(ratio),
+          score: (ratio / 21) * 100
+        })
+      }
+    }
+
+    if (results.length === 0) {
+      notify('未找到可检测的颜色组合', 'warning')
+      return
+    }
+
+    results.sort((left, right) => left.ratio - right.ratio)
+    const minResult = results[0]
+    const passCount = results.filter((item) => item.ratio >= 4.5).length
+
     addChatMessage('assistant', 'contrast', '', {
-      color1: selectedColor1.value,
-      color2: selectedColor2.value,
-      ratio,
-      level,
-      score: (ratio / 21) * 100
+      results,
+      totalPairs: results.length,
+      passCount,
+      minRatio: minResult.ratio,
+      minLevel: minResult.level
     })
   }
 

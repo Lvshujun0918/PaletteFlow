@@ -40,13 +40,16 @@
                   <template v-else-if="message.type === 'contrast'">
                     <div class="palette-summary">
                       <div class="palette-title">对比度检查结果</div>
-                      <div class="contrast-preview">
-                        <span class="palette-chip" :style="{ backgroundColor: message.payload.color1 }"></span>
-                        <span class="palette-chip" :style="{ backgroundColor: message.payload.color2 }"></span>
+                      <div class="palette-text">共检测 {{ message.payload.totalPairs ?? 1 }} 组颜色组合</div>
+                      <div class="palette-text">最低对比度：{{ (message.payload.minRatio ?? message.payload.ratio ?? 0).toFixed(2) }}:1（{{ message.payload.minLevel || message.payload.level || '未知' }}）</div>
+                      <div class="palette-text" v-if="message.payload.totalPairs">通过 WCAG AA（4.5:1）组合：{{ message.payload.passCount ?? 0 }}/{{ message.payload.totalPairs }}</div>
+                      <div class="colorblind-block" v-for="(item, idx) in (Array.isArray(message.payload.results) && message.payload.results.length > 0 ? message.payload.results : [{ color1: message.payload.color1, color2: message.payload.color2, ratio: message.payload.ratio, level: message.payload.level }])" :key="idx">
+                        <div class="contrast-preview">
+                          <span class="palette-chip" :style="{ backgroundColor: item.color1 }"></span>
+                          <span class="palette-chip" :style="{ backgroundColor: item.color2 }"></span>
+                        </div>
+                        <div class="palette-text">{{ item.color1 }} vs {{ item.color2 }}：{{ (item.ratio ?? 0).toFixed(2) }}:1（{{ item.level || '未知' }}）</div>
                       </div>
-                      <div class="palette-text">对比度：{{ message.payload.ratio.toFixed(2) }}:1</div>
-                      <div class="palette-text">等级：{{ message.payload.level }}</div>
-                      <div class="palette-text">评分：{{ message.payload.score.toFixed(1) }}/100</div>
                     </div>
                   </template>
 
@@ -109,21 +112,7 @@
                 <button class="action-chip" @click="insertQuickInput('对比度检查')">对比度检查</button>
                 <button class="action-chip" @click="insertQuickInput('色盲检查')">色盲检查</button>
               </div>
-              <div class="action-row selector-row">
-                <div class="selector-group">
-                  <label>颜色1</label>
-                  <select v-model="selectedColor1">
-                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
-                  </select>
-                </div>
-                <div class="selector-group">
-                  <label>颜色2</label>
-                  <select v-model="selectedColor2">
-                    <option v-for="(color, index) in currentColors" :key="index" :value="color">{{ color }}</option>
-                  </select>
-                </div>
-                <div class="selector-hint">选择颜色后输入“对比度检查”</div>
-              </div>
+              <div class="selector-hint">输入“对比度检查”将自动检测当前全部颜色组合</div>
             </div>
           </div>
         </div>
@@ -408,6 +397,10 @@ export default {
   border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
+.contrast-preview {
+  display: flex;
+}
+
 .palette-summary {
   display: flex;
   flex-direction: column;
@@ -426,6 +419,8 @@ export default {
 }
 
 .palette-chip {
+  display: block;
+  margin: 2px;
   width: 24px;
   height: 24px;
   border-radius: 6px;
