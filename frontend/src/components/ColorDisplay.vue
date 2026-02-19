@@ -7,8 +7,8 @@
         <div class="color-info">
           <div class="color-code">{{ color }}</div>
           <div class="color-actions">
-            <button class="copy-btn" title="复制颜色值">📋</button>
-            <button class="pick-btn" title="选中该色进行单色重生成" @click.stop="emitPickColor(index)">🎯</button>
+            <button class="copy-btn" title="复制颜色值"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><g fill="none"><path fill="#333333" d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="#333333" d="M19 2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2V4a2 2 0 0 1 2-2zm-9 13H8a1 1 0 0 0-.117 1.993L8 17h2a1 1 0 0 0 .117-1.993zm9-11H9v2h6a2 2 0 0 1 2 2v8h2zm-7 7H8a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2"/></g></svg></button>
+            <button class="pick-btn" title="选中该色进行单色重生成" @click.stop="emitPickColor(index)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m-6.933 12.481l-3.274-3.274l1.414-1.414l1.726 1.726l4.299-5.159l1.537 1.281z"/><path fill="#333333" d="M4 22h11v-2H4V8H2v12c0 1.103.897 2 2 2"/></svg></button>
           </div>
         </div>
       </div>
@@ -215,6 +215,8 @@ export default {
 }
 
 .copy-btn {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   cursor: pointer;
@@ -230,10 +232,11 @@ export default {
 .color-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
 .pick-btn {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   cursor: pointer;

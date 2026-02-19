@@ -190,7 +190,7 @@
 
           <div class="session-choice-actions">
             <button class="session-btn primary full-width" @click="confirmStartNewConversation">
-              <span>+</span> 开始新一轮配色
+              <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="#ffffff" d="M459.94 53.25a16.06 16.06 0 0 0-23.22-.56L424.35 65a8 8 0 0 0 0 11.31l11.34 11.32a8 8 0 0 0 11.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38M399.34 90L218.82 270.2a9 9 0 0 0-2.31 3.93L208.16 299a3.91 3.91 0 0 0 4.86 4.86l24.85-8.35a9 9 0 0 0 3.93-2.31L422 112.66a9 9 0 0 0 0-12.66l-9.95-10a9 9 0 0 0-12.71 0"/><path fill="#ffffff" d="M386.34 193.66L264.45 315.79A41.1 41.1 0 0 1 247.58 326l-25.9 8.67a35.92 35.92 0 0 1-44.33-44.33l8.67-25.9a41.1 41.1 0 0 1 10.19-16.87l122.13-121.91a8 8 0 0 0-5.65-13.66H104a56 56 0 0 0-56 56v240a56 56 0 0 0 56 56h240a56 56 0 0 0 56-56V199.31a8 8 0 0 0-13.66-5.65"/></svg></span> 开始新一轮配色
             </button>
           </div>
         </div>
@@ -365,7 +365,7 @@ export default {
 .session-choice-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -449,6 +449,11 @@ export default {
   padding: 9px 14px;
   cursor: pointer;
   font-size: 0.9rem;
+}
+
+.session-btn>span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .session-btn.secondary {
@@ -858,7 +863,7 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
