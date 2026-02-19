@@ -1,11 +1,13 @@
 <template>
   <div class="colorblind-summary">
     <div class="colorblind-title">色盲检查结果</div>
-    <div class="colorblind-block" v-for="type in colorblindTypes" :key="type.key">
-      <div class="colorblind-name">{{ type.name }}</div>
-      <div class="palette-colors">
-        <span v-for="(color, index) in payload?.[type.key] || []" :key="index" class="palette-chip" :style="{ backgroundColor: color }"></span>
-      </div>
+    <div class="colorblind-wrap">
+        <div class="colorblind-block" v-for="type in colorblindTypes" :key="type.key">
+        <div class="colorblind-name">{{ type.name }}</div>
+        <div class="palette-colors">
+            <span v-for="(color, index) in payload?.[type.key] || []" :key="index" class="palette-chip" :style="{ backgroundColor: color }"></span>
+        </div>
+        </div>
     </div>
     <div class="colorblind-status">
       {{ payload?.isAccessible ? '✅ 配色对色盲友好' : '❌ 建议调整以改善色盲可访问性' }}
@@ -40,6 +42,12 @@ export default {
 .colorblind-title {
   font-weight: 600;
   color: #2d3748;
+}
+
+.colorblind-wrap {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .colorblind-block {
