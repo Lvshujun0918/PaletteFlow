@@ -23,8 +23,12 @@
                 <p v-if="currentSessionTheme" class="session-theme-title">主题：{{ currentSessionTheme }}</p>
               </div>
               <div class="chat-header-actions">
-                <button class="chat-header-btn" @click="confirmStartNewConversation"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48"><g fill="none" stroke="#333333" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M19 10V7a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v22a2 2 0 0 1-2 2h-4"/><rect width="24" height="24" x="5" y="18" rx="2"/><path d="M17 25v10m-5-5h10"/></g></svg></button>
-                <button class="chat-header-btn" @click="handleShowHistory"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M12 21q-3.45 0-6.012-2.287T3.05 13H5.1q.35 2.6 2.313 4.3T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H9v2H3V4h2v2.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m2.8-4.8L11 12.4V7h2v4.6l3.2 3.2z"/></svg></button>
+                <Tooltip text="新建对话" position="bottom">
+                  <button class="chat-header-btn" @click="confirmStartNewConversation"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48"><g fill="none" stroke="#333333" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M19 10V7a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v22a2 2 0 0 1-2 2h-4"/><rect width="24" height="24" x="5" y="18" rx="2"/><path d="M17 25v10m-5-5h10"/></g></svg></button>
+                </Tooltip>
+                <Tooltip text="查看对话历史" position="bottom">
+                  <button class="chat-header-btn" @click="handleShowHistory"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M12 21q-3.45 0-6.012-2.287T3.05 13H5.1q.35 2.6 2.313 4.3T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H9v2H3V4h2v2.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m2.8-4.8L11 12.4V7h2v4.6l3.2 3.2z"/></svg></button>
+                </Tooltip>
               </div>
             </div>
 
@@ -131,9 +135,9 @@
 
       <AppModal :show="showNewConversationConfirm" variant="confirm" @close="cancelStartNewConversation">
         <template #header>
-          <h3 class="modal-title">确认新建对话？</h3>
+          <h3 class="modal-title">请确认</h3>
         </template>
-        <div class="modal-text">当前未保存的上下文可能会丢失，是否继续？</div>
+        <div class="modal-text">你确定要新建一个配色对话吗？</div>
         <template #actions>
           <GlassButton variant="secondary" @click="cancelStartNewConversation">取消</GlassButton>
           <GlassButton variant="primary" @click="proceedStartNewConversation">确认新建</GlassButton>
@@ -180,6 +184,7 @@ import ChatColorblindMessage from '../components/ChatColorblindMessage.vue'
 import ColorPickerModal from '../components/ColorPickerModal.vue'
 import AppModal from '../components/AppModal.vue'
 import logo from '../assets/logo.png'
+import Tooltip from '../components/Tooltip.vue'
 
 export default {
   name: 'App',
@@ -191,7 +196,8 @@ export default {
     ChatPaletteMessage,
     ChatContrastMessage,
     ChatColorblindMessage,
-    ColorPickerModal
+    ColorPickerModal,
+    Tooltip
   },
   data() {
     return {
