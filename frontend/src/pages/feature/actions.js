@@ -280,6 +280,7 @@ export function createActionsApi(deps) {
       notify('单色重生成失败，请重试', 'error')
     } finally {
       loadingSingle.value = false
+      loading.value = false
     }
   }
 
@@ -396,6 +397,7 @@ export function createActionsApi(deps) {
       addChatMessage('user', 'text', prompt)
       singleColorPrompt.value = prompt
       chatInput.value = ''
+      loading.value = true
       handleSingleColorRegenerate()
       return
     }
