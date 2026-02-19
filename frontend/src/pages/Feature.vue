@@ -894,10 +894,6 @@ export default {
 }
 /* 响应式设计 */
 @media (max-width: 1024px) {
-  .header {
-    height: 125px;
-  }
-
   .main-content {
     flex-direction: column;
   }
@@ -906,28 +902,19 @@ export default {
     border-right: none;
     border-bottom: 1px solid #e0e0e0;
   }
-
-  .header h1 {
-    font-size: 2rem;
-  }
-
   .chat-input {
     flex-direction: column;
   }
 }
 
 @media (max-width: 768px) {
-  .header {
-    padding: 20px 15px;
-    height: 100px;
-  }
-
-  .logo-container {
-    transform: scale(0.8);
-  }
-
   .chat-bubble {
     max-width: 100%;
+  }
+
+  .chat-header-main{
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
