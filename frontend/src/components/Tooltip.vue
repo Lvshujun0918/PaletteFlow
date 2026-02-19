@@ -4,7 +4,7 @@
     <Teleport to="body">
       <Transition name="tooltip-fade">
         <div 
-          v-if="show" 
+          v-if="show && hasContent" 
           class="tooltip-content" 
           :class="[`tooltip-${position}`]"
           :style="tooltipStyle"
@@ -39,6 +39,12 @@ export default {
       show: false,
       timer: null,
       tooltipStyle: {}
+    }
+  },
+  computed: {
+    hasContent() {
+      const trimmed = typeof this.text === 'string' ? this.text.trim() : ''
+      return Boolean(trimmed) || Boolean(this.$slots.tooltip)
     }
   },
   methods: {
@@ -83,6 +89,7 @@ export default {
       }
     },
     handleMouseEnter() {
+      if (!this.hasContent) return
       if (this.delay > 0) {
         this.timer = setTimeout(() => {
           this.updatePosition()
