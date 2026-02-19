@@ -99,8 +99,8 @@
     </div>
 
     <template #actions>
-      <GlassButton class="action-btn secondary" @click="close">取消</GlassButton>
-      <GlassButton class="action-btn primary" @click="confirm">确定</GlassButton>
+      <GlassButton variant="secondary" class="action-btn" @click="close">取消</GlassButton>
+      <GlassButton variant="primary" class="action-btn" @click="confirm">确定</GlassButton>
     </template>
   </AppModal>
 </template>
@@ -595,16 +595,6 @@ const confirm = () => {
 .action-btn {
   min-width: 80px;
   padding: 8px 16px;
-}
-
-.action-btn.secondary {
-  background: #edf2f7;
-  color: #4a5568;
-}
-
-.action-btn.primary {
-  background: #3182ce;
-  color: white;
 }
 
 /* HSL Sliders */

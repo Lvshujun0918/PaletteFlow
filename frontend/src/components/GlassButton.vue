@@ -68,6 +68,33 @@ export default {
   transform: translateY(-1px);
 }
 
+.glass-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-button--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f91 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.glass-button--secondary {
+  background: #e2e8f0;
+  color: #475569;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.glass-button--secondary:hover:not(:disabled) {
+  background: #cbd5e1;
+  color: #334155;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
 .glass-button--ghost {
   background: rgba(255, 255, 255, 0.28);
   color: #1f2937;
