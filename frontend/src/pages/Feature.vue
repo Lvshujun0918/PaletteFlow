@@ -35,14 +35,16 @@
 
                   <template v-else-if="message.type === 'palette'">
                     <div class="palette-summary">
-                      <div class="palette-title">{{ message.payload.title || '已生成配色' }}</div>
+                      <div class="palette-title">
+                        <div class="palette-title-left">{{ message.payload.title || '已生成配色' }}</div>
+                        <div class="palette-title-right">详细信息请查看右侧面板</div>
+                      </div>
                       <div class="palette-colors">
                         <span v-for="(color, index) in message.payload.colors" :key="index" class="palette-chip clickable-chip"
                           :style="{ backgroundColor: color }" :title="color"
                           @click="handlePickColorFromChat(message.payload.colors, index)"></span>
                       </div>
-                      <div class="palette-text">提示词：{{ message.payload.prompt }}</div>
-                      <div class="palette-text">详细信息请查看右侧配色面板</div>
+                      <div class="palette-text">{{ message.payload.advice }}</div>
                     </div>
                   </template>
 
@@ -95,10 +97,13 @@
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
               <div class="input-footer">
                 <div class="input-tip">示例：温暖秋色调 / 科技感蓝色 / 适合网页仪表盘</div>
-                <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
+                <GlassButton v-if="!loading" class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
                   @click="handleSendPrompt">
-                  <span v-if="!loading">发送</span>
-                  <span v-else>生成中...</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><g fill="none"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="#ffffff" d="M20.235 5.686c.432-1.195-.726-2.353-1.921-1.92L3.709 9.048c-1.199.434-1.344 2.07-.241 2.709l4.662 2.699l4.163-4.163a1 1 0 0 1 1.414 1.414L9.544 15.87l2.7 4.662c.638 1.103 2.274.957 2.708-.241z"/></g></svg>发送
+                </GlassButton>
+                <GlassButton v-else class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
+                  @click="handleSendPrompt">
+                  生成中...
                 </GlassButton>
               </div>
             </div>
@@ -116,7 +121,6 @@
             </button>
             <div class="quick-actions-body" v-show="isQuickActionsOpen">
               <div class="action-row">
-                <button class="action-chip" @click="showHistoryPanel = true">查看历史记录</button>
                 <button class="action-chip" @click="insertQuickInput('不满意，重新生成')">重新生成</button>
                 <button class="action-chip" @click="insertQuickInput('对比度检查')">对比度检查</button>
                 <button class="action-chip" @click="insertQuickInput('色盲检查')">色盲检查</button>
@@ -512,8 +516,17 @@ export default {
 }
 
 .palette-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.palette-title-left {
   font-weight: 600;
   color: #2d3748;
+}
+
+.palette-title-right { 
+  color: #d9d9d9;
 }
 
 .palette-colors {
