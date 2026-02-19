@@ -102,73 +102,67 @@
       </div>
 
       <!-- 历史记录面板 -->
-      <div v-if="showHistoryPanel" class="history-panel-overlay">
-        <div class="history-panel-card glass-panel">
-          <div class="history-panel-header">
-            <h3>历史记录</h3>
-            <button class="close-btn" @click="showHistoryPanel = false">✕</button>
+      <AppModal :show="showHistoryPanel" variant="history" :close-on-overlay="false" @close="showHistoryPanel = false">
+        <template #header>
+          <h3>历史记录</h3>
+          <button class="close-btn" @click="showHistoryPanel = false">✕</button>
+        </template>
+        <div class="history-list-container">
+          <div v-if="savedSessions.length === 0" class="empty-history">
+            暂无历史会话
           </div>
-          <div class="history-list-container">
-            <div v-if="savedSessions.length === 0" class="empty-history">
-              暂无历史会话
-            </div>
-            <div v-else class="history-session-item" v-for="session in savedSessions" :key="session.id" @click="loadSession(session)">
-              <div class="session-info">
-                <div class="session-theme">{{ session.theme || '无主题' }}</div>
-                <div class="session-time">{{ formatTime(session.timestamp) }}</div>
-                <div class="session-preview-colors">
-                  <span v-for="(c, i) in (session.colors || session.currentColors || [])" :key="i" class="mini-color-dot" :style="{ backgroundColor: c }"></span>
-                </div>
+          <div v-else class="history-session-item" v-for="session in savedSessions" :key="session.id" @click="loadSession(session)">
+            <div class="session-info">
+              <div class="session-theme">{{ session.theme || '无主题' }}</div>
+              <div class="session-time">{{ formatTime(session.timestamp) }}</div>
+              <div class="session-preview-colors">
+                <span v-for="(c, i) in (session.colors || session.currentColors || [])" :key="i" class="mini-color-dot" :style="{ backgroundColor: c }"></span>
               </div>
-              <button class="delete-session-btn" @click.stop="deleteSession(session.id)">✕</button>
             </div>
+            <button class="delete-session-btn" @click.stop="deleteSession(session.id)">✕</button>
           </div>
         </div>
-      </div>
+      </AppModal>
 
       <!-- 通知 -->
       <Notification />
 
-      <div v-if="showNewConversationConfirm" class="new-conversation-overlay" @click.self="cancelStartNewConversation">
-        <div class="new-conversation-card glass-panel">
-          <div class="new-conversation-title">确认新建对话？</div>
-          <div class="new-conversation-text">当前未保存的上下文可能会丢失，是否继续？</div>
-          <div class="new-conversation-actions">
-            <button class="session-btn secondary" @click="cancelStartNewConversation">取消</button>
-            <button class="session-btn primary" @click="proceedStartNewConversation">确认新建</button>
-          </div>
-        </div>
-      </div>
+      <AppModal :show="showNewConversationConfirm" variant="confirm" @close="cancelStartNewConversation">
+        <template #header>
+          <h3 class="modal-title">确认新建对话？</h3>
+        </template>
+        <div class="modal-text">当前未保存的上下文可能会丢失，是否继续？</div>
+        <template #actions>
+          <button class="session-btn secondary" @click="cancelStartNewConversation">取消</button>
+          <button class="session-btn primary" @click="proceedStartNewConversation">确认新建</button>
+        </template>
+      </AppModal>
 
-      <div v-if="showSessionChoice" class="session-choice-overlay">
-        <div class="session-choice-card glass-panel wide-card">
-          <div class="session-choice-header">
-            <div class="session-choice-title">继续之前的创作</div>
-          </div>
-          
-          <div class="session-list-scroll">
-             <div v-if="savedSessions.length === 0" class="empty-state">
-                暂无历史会话记录
-             </div>
-             <div v-else class="history-session-item" v-for="session in savedSessions" :key="session.id" @click="loadSession(session)">
-              <div class="session-info">
-                <div class="session-theme">{{ session.theme || '无主题' }}</div>
-                <div class="session-time">{{ formatTime(session.timestamp) }}</div>
-                <div class="session-preview-colors">
-                  <span v-for="(c, i) in (session.colors || session.currentColors || [])" :key="i" class="mini-color-dot" :style="{ backgroundColor: c }"></span>
-                </div>
+      <AppModal :show="showSessionChoice" variant="choice" :close-on-overlay="false">
+        <template #header>
+          <h3 class="modal-title">继续之前的创作</h3>
+        </template>
+        <div class="session-list-scroll">
+           <div v-if="savedSessions.length === 0" class="empty-state">
+              暂无历史会话记录
+           </div>
+           <div v-else class="history-session-item" v-for="session in savedSessions" :key="session.id" @click="loadSession(session)">
+            <div class="session-info">
+              <div class="session-theme">{{ session.theme || '无主题' }}</div>
+              <div class="session-time">{{ formatTime(session.timestamp) }}</div>
+              <div class="session-preview-colors">
+                <span v-for="(c, i) in (session.colors || session.currentColors || [])" :key="i" class="mini-color-dot" :style="{ backgroundColor: c }"></span>
               </div>
-              <button class="delete-session-btn" @click.stop="deleteSession(session.id)">✕</button>
             </div>
-          </div>
-
-          <div class="session-choice-actions">
-            <button class="session-btn primary full-width" @click="confirmStartNewConversation">
-              <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="#ffffff" d="M459.94 53.25a16.06 16.06 0 0 0-23.22-.56L424.35 65a8 8 0 0 0 0 11.31l11.34 11.32a8 8 0 0 0 11.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38M399.34 90L218.82 270.2a9 9 0 0 0-2.31 3.93L208.16 299a3.91 3.91 0 0 0 4.86 4.86l24.85-8.35a9 9 0 0 0 3.93-2.31L422 112.66a9 9 0 0 0 0-12.66l-9.95-10a9 9 0 0 0-12.71 0"/><path fill="#ffffff" d="M386.34 193.66L264.45 315.79A41.1 41.1 0 0 1 247.58 326l-25.9 8.67a35.92 35.92 0 0 1-44.33-44.33l8.67-25.9a41.1 41.1 0 0 1 10.19-16.87l122.13-121.91a8 8 0 0 0-5.65-13.66H104a56 56 0 0 0-56 56v240a56 56 0 0 0 56 56h240a56 56 0 0 0 56-56V199.31a8 8 0 0 0-13.66-5.65"/></svg></span> 开始新一轮配色
-            </button>
+            <button class="delete-session-btn" @click.stop="deleteSession(session.id)">✕</button>
           </div>
         </div>
-      </div>
+        <template #actions>
+          <button class="session-btn primary full-width" @click="confirmStartNewConversation">
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="#ffffff" d="M459.94 53.25a16.06 16.06 0 0 0-23.22-.56L424.35 65a8 8 0 0 0 0 11.31l11.34 11.32a8 8 0 0 0 11.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38M399.34 90L218.82 270.2a9 9 0 0 0-2.31 3.93L208.16 299a3.91 3.91 0 0 0 4.86 4.86l24.85-8.35a9 9 0 0 0 3.93-2.31L422 112.66a9 9 0 0 0 0-12.66l-9.95-10a9 9 0 0 0-12.71 0"/><path fill="#ffffff" d="M386.34 193.66L264.45 315.79A41.1 41.1 0 0 1 247.58 326l-25.9 8.67a35.92 35.92 0 0 1-44.33-44.33l8.67-25.9a41.1 41.1 0 0 1 10.19-16.87l122.13-121.91a8 8 0 0 0-5.65-13.66H104a56 56 0 0 0-56 56v240a56 56 0 0 0 56 56h240a56 56 0 0 0 56-56V199.31a8 8 0 0 0-13.66-5.65"/></svg></span> 开始新一轮配色
+          </button>
+        </template>
+      </AppModal>
     </div>
   </div>
 </template>
@@ -181,6 +175,7 @@ import GlassButton from '../components/GlassButton.vue'
 import ChatPaletteMessage from '../components/ChatPaletteMessage.vue'
 import ChatContrastMessage from '../components/ChatContrastMessage.vue'
 import ChatColorblindMessage from '../components/ChatColorblindMessage.vue'
+import AppModal from '../components/AppModal.vue'
 import logo from '../assets/logo.png'
 
 export default {
@@ -189,6 +184,7 @@ export default {
     ColorDisplay,
     Notification,
     GlassButton,
+    AppModal,
     ChatPaletteMessage,
     ChatContrastMessage,
     ChatColorblindMessage
@@ -342,86 +338,6 @@ export default {
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
-.session-choice-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-}
-
-.new-conversation-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30;
-}
-
-.new-conversation-card {
-  width: min(90vw, 420px);
-  padding: 20px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25));
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.new-conversation-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.new-conversation-text {
-  font-size: 0.92rem;
-  color: #475569;
-  line-height: 1.5;
-}
-
-.new-conversation-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.session-choice-card {
-  width: min(92vw, 460px);
-  padding: 22px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.session-choice-title {
-  font-size: 1.08rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.session-choice-text {
-  color: #475569;
-  font-size: 0.93rem;
-  line-height: 1.5;
-}
-
-.session-choice-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
 
 .session-btn {
   border: none;
@@ -839,46 +755,6 @@ export default {
 }
 
 /* 历史记录面板样式 */
-.history-panel-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.history-panel-card {
-  width: 90%;
-  max-width: 600px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-}
-
-.history-panel-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.history-panel-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #2d3748;
-}
 
 .close-btn {
   background: none;
@@ -950,32 +826,6 @@ export default {
 }
 
 /* 宽屏卡片样式覆盖 */
-.session-choice-card.wide-card {
-  width: min(92vw, 500px);
-  max-width: 500px;
-  max-height: 80vh;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.9); /* 提高不透明度 */
-}
-
-.session-choice-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.session-choice-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0;
-}
-
 .session-list-scroll {
   flex: 1;
   overflow-y: auto;
@@ -984,13 +834,6 @@ export default {
   flex-direction: column;
   gap: 10px;
   min-height: 100px; /* 最小高度 */
-}
-
-.session-choice-actions {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  background: rgba(255, 255, 255, 0.4);
-  flex-shrink: 0;
 }
 
 .full-width {
