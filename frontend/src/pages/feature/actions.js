@@ -71,7 +71,7 @@ export function createActionsApi(deps) {
     if (editingColorIndex.value >= 0 && editingColorIndex.value < newColors.length) {
       newColors[editingColorIndex.value] = newColor
       currentColors.value = newColors
-
+      addChatMessage('user', 'text', '手动调整配色方案')
       // Add assistant message
       chatMessages.value.push({
         id: Date.now(),
