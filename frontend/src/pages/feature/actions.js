@@ -40,7 +40,8 @@ export function createActionsApi(deps) {
     saveHistoriesToStorage,
     saveChatMessagesToStorage,
     persistSessions,
-    cloneMessages
+    cloneMessages,
+    clearSingleColorMode
   } = deps
 
   const addChatMessage = (role, type, content, payload = null) => {
@@ -273,6 +274,7 @@ export function createActionsApi(deps) {
         advice: response.data.advice || ''
       })
       notify('已重生成指定颜色并更新整套配色', 'success')
+      clearSingleColorMode()
     } catch (error) {
       console.error('单色重生成失败:', error)
       notify('单色重生成失败，请重试', 'error')

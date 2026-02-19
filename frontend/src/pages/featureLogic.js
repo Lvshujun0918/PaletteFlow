@@ -133,7 +133,8 @@ export function useFeatureLogic() {
     saveHistoriesToStorage: storageApi.saveHistoriesToStorage,
     saveChatMessagesToStorage: storageApi.saveChatMessagesToStorage,
     persistSessions: storageApi.persistSessions,
-    cloneMessages
+    cloneMessages,
+    clearSingleColorMode: sessionApi.clearSingleColorMode
   })
 
   watch(
