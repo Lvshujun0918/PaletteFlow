@@ -2,13 +2,14 @@
   <div class="color-display">
     <!-- 配色卡片网格 -->
     <div class="color-cards">
-      <div v-for="(color, index) in colors" :key="index" class="color-card glass-card" @click="copyToClipboard(color)">
+      <div v-for="(color, index) in colors" :key="index" class="color-card glass-card">
         <div class="color-preview" :style="{ backgroundColor: color }"></div>
         <div class="color-info">
           <div class="color-code">{{ color }}</div>
           <div class="color-actions">
-            <button class="copy-btn" title="复制颜色值"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><g fill="none"><path fill="#333333" d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="#333333" d="M19 2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2V4a2 2 0 0 1 2-2zm-9 13H8a1 1 0 0 0-.117 1.993L8 17h2a1 1 0 0 0 .117-1.993zm9-11H9v2h6a2 2 0 0 1 2 2v8h2zm-7 7H8a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2"/></g></svg></button>
-            <button class="pick-btn" title="选中该色进行单色重生成" @click.stop="emitPickColor(index)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m-6.933 12.481l-3.274-3.274l1.414-1.414l1.726 1.726l4.299-5.159l1.537 1.281z"/><path fill="#333333" d="M4 22h11v-2H4V8H2v12c0 1.103.897 2 2 2"/></svg></button>
+            <button class="copy-btn" title="复制颜色值" @click.stop="copyToClipboard(color)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><g fill="none"><path fill="#333333" d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="#333333" d="M19 2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2V4a2 2 0 0 1 2-2zm-9 13H8a1 1 0 0 0-.117 1.993L8 17h2a1 1 0 0 0 .117-1.993zm9-11H9v2h6a2 2 0 0 1 2 2v8h2zm-7 7H8a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2"/></g></svg></button>
+            <button class="edit-btn" title="手动调节颜色" @click.stop="emitPickColor(index)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M5 19h1.4l8.625-8.625l-1.4-1.4L5 17.6zm-1 2q-.425 0-.712-.288T3 20v-2.825q0-.2.075-.388t.225-.337l10.3-10.3q.3-.3.675-.45t.75-.15q.4 0 .763.15t.662.45L17.925 8.6q.275.3.425.663T18.5 10q0 .375-.137.738t-.438.662l-10.3 10.3q-.15.15-.337.225T6.825 22zM14.325 9.675l-.7-.7l1.4 1.4z"/></svg></button>
+            <button class="pick-btn" title="选中该色进行单色重生成" @click.stop="emitSelectColor(index)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m-6.933 12.481l-3.274-3.274l1.414-1.414l1.726 1.726l4.299-5.159l1.537 1.281z"/><path fill="#333333" d="M4 22h11v-2H4V8H2v12c0 1.103.897 2 2 2"/></svg></button>
           </div>
         </div>
       </div>
@@ -52,7 +53,7 @@ export default {
   components: {
     GlassButton
   },
-  emits: ['regenerate', 'pick-color'],
+  emits: ['regenerate', 'pick-color', 'select-color'],
   props: {
     colors: {
       type: Array,
@@ -74,6 +75,9 @@ export default {
   methods: {
         emitPickColor(index) {
           this.$emit('pick-color', index)
+        },
+        emitSelectColor(index) {
+          this.$emit('select-color', index)
         },
     copyToClipboard(color) {
       navigator.clipboard.writeText(color).then(() => {
@@ -187,11 +191,33 @@ export default {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+}
+
+.color-card::after {
+  content: '点击调节';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.color-card:hover::after {
+  opacity: 1;
 }
 
 .color-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .color-preview {
@@ -246,6 +272,21 @@ export default {
 }
 
 .pick-btn:hover {
+  transform: scale(1.15);
+}
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 5px;
+  transition: transform 0.2s;
+}
+
+.edit-btn:hover {
   transform: scale(1.15);
 }
 

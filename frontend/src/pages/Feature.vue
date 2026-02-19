@@ -29,13 +29,14 @@
             </div>
 
             <div class="chat-messages">
-              <div v-for="message in chatMessages" :key="message.id" class="chat-message" :class="message.role">
+              <div v-for="(message, index) in chatMessages" :key="message.id" class="chat-message" :class="message.role">
                 <div class="chat-bubble" :class="message.role">
                   <div v-if="message.type === 'text'">{{ message.content }}</div>
 
                   <template v-else-if="message.type === 'palette'">
                     <ChatPaletteMessage
                       :payload="message.payload"
+                      :isCurrentMessage="isLastPaletteMessage(index)"
                       @pick-color="handlePickColorFromChat"
                     />
                   </template>
@@ -83,7 +84,7 @@
         <!-- 右侧：配色显示面板 -->
         <div class="panel panel-right glass-panel">
           <ColorDisplay :colors="currentColors" :prompt="currentPrompt" :timestamp="currentTimestamp"
-            :advice="currentAdvice" @regenerate="handleRegenerate" @pick-color="handlePickColorFromDisplay" />
+            :advice="currentAdvice" @regenerate="handleRegenerate" @pick-color="handlePickColorFromDisplay" @select-color="handleSelectColorForAI" />
           <div class="quick-actions-panel" :class="{ collapsed: !isQuickActionsOpen }">
             <button class="action-header" @click="toggleQuickActions">
               <span>快捷指令</span>
@@ -208,7 +209,24 @@ export default {
     }
   },
   setup() {
-    return useFeatureLogic()
+    const featureLogic = useFeatureLogic()
+    
+    // 判断是否是最后一条palette消息
+    const isLastPaletteMessage = (index) => {
+      const messages = featureLogic.chatMessages.value
+      // 从当前索引往后找，看是否还有palette类型的消息
+      for (let i = index + 1; i < messages.length; i++) {
+        if (messages[i].type === 'palette') {
+          return false
+        }
+      }
+      return true
+    }
+    
+    return {
+      ...featureLogic,
+      isLastPaletteMessage
+    }
   }
 }
 </script>

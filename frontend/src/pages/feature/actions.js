@@ -98,6 +98,22 @@ export function createActionsApi(deps) {
     handlePickColorFromChat([...currentColors.value], index)
   }
 
+  const handleSelectColorForAI = (index) => {
+    if (!currentColors.value || currentColors.value.length === 0) {
+      notify('当前没有配色可供选择', 'error')
+      return
+    }
+    if (index < 0 || index >= currentColors.value.length) {
+      notify('颜色索引无效', 'error')
+      return
+    }
+    singleColorHex.value = currentColors.value[index]
+    singleColorIndex.value = index
+    singleColorMode.value = true
+    singleColorBase.value = [...currentColors.value]
+    notify(`已选中颜色 ${currentColors.value[index]}，请输入调整需求`, 'info')
+  }
+
   const handleGenerate = async (prompt) => {
     loading.value = true
     try {
@@ -408,6 +424,7 @@ export function createActionsApi(deps) {
     addChatMessage,
     handlePickColorFromChat,
     handlePickColorFromDisplay,
+    handleSelectColorForAI,
     handleColorPickerConfirm,
     handleGenerate,
     handleRegenerate,
