@@ -5,23 +5,33 @@
       <div class="palette-title-right">详细信息请查看右侧面板</div>
     </div>
     <div class="palette-colors">
-      <span
+      <Tooltip
         v-for="(color, index) in payload?.colors || []"
         :key="index"
-        class="palette-chip"
-        :class="{ 'clickable-chip': isCurrentMessage }"
-        :style="{ backgroundColor: color, cursor: isCurrentMessage ? 'pointer' : 'default' }"
-        :title="isCurrentMessage ? '点击手动调节' : color"
-        @click="handlePickColor(color, index)"
-      ></span>
+        :text="isCurrentMessage ? '调节' : ''"
+        position="bottom"
+      >
+        <span
+          class="palette-chip"
+          :class="{ 'clickable-chip': isCurrentMessage }"
+          :style="{ backgroundColor: color, cursor: isCurrentMessage ? 'pointer' : 'default' }"
+          :title="!isCurrentMessage ? color : ''"
+          @click="handlePickColor(color, index)"
+        ></span>
+      </Tooltip>
     </div>
     <div class="palette-text">{{ payload?.advice || '' }}</div>
   </div>
 </template>
 
 <script>
+import Tooltip from './Tooltip.vue'
+
 export default {
   name: 'ChatPaletteMessage',
+  components: {
+    Tooltip
+  },
   props: {
     payload: {
       type: Object,
@@ -91,22 +101,6 @@ export default {
 .clickable-chip:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-}
-
-.clickable-chip:hover::after {
-  content: '调节';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 10;
 }
 
 .palette-text {
