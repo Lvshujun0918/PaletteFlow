@@ -78,6 +78,7 @@ export function useFeatureLogic() {
     router,
     notify,
     currentColors,
+    previousColors,
     currentPrompt,
     currentTimestamp,
     currentAdvice,

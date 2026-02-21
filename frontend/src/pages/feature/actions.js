@@ -71,6 +71,10 @@ export function createActionsApi(deps) {
     const newColors = [...currentColors.value]
     if (editingColorIndex.value >= 0 && editingColorIndex.value < newColors.length) {
       newColors[editingColorIndex.value] = newColor
+      
+      // 保存当前配色为 previousColors（在更新前）
+      previousColors.value = [...currentColors.value]
+      
       currentColors.value = newColors
       addChatMessage('user', 'text', '手动调整配色方案')
       // Add assistant message
@@ -406,6 +410,18 @@ export function createActionsApi(deps) {
     if (!targetMessage || targetMessage.type !== 'palette' || !targetMessage.payload?.colors) {
       return
     }
+
+    // 查找目标消息之前的最后一条palette消息作为previousColors
+    let prevPaletteMessage = null
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (chatMessages.value[i].type === 'palette' && chatMessages.value[i].payload?.colors) {
+        prevPaletteMessage = chatMessages.value[i]
+        break
+      }
+    }
+
+    // 设置previousColors为前一条palette的颜色，如果没有则清空
+    previousColors.value = prevPaletteMessage ? [...prevPaletteMessage.payload.colors] : []
 
     currentColors.value = [...targetMessage.payload.colors]
     currentPrompt.value = targetMessage.payload.prompt || currentPrompt.value

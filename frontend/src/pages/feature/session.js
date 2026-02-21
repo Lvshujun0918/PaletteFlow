@@ -3,6 +3,7 @@ export function createSessionApi(deps) {
     router,
     notify,
     currentColors,
+    previousColors,
     currentPrompt,
     currentTimestamp,
     currentAdvice,
@@ -41,6 +42,7 @@ export function createSessionApi(deps) {
   const startNewConversation = () => {
     clearSingleColorMode()
     currentColors.value = []
+    previousColors.value = [] // 清空上一组配色
     currentPrompt.value = ''
     currentTimestamp.value = Date.now()
     currentAdvice.value = ''
@@ -74,6 +76,20 @@ export function createSessionApi(deps) {
     chatMessages.value = Array.isArray(session.messages) && session.messages.length > 0
       ? cloneMessages(session.messages)
       : [createWelcomeMessage()]
+
+    // 根据聊天记录设置previousColors：查找倒数第二条palette消息
+    let paletteCount = 0
+    let previousPaletteColors = []
+    for (let i = chatMessages.value.length - 1; i >= 0; i--) {
+      if (chatMessages.value[i].type === 'palette' && chatMessages.value[i].payload?.colors) {
+        paletteCount++
+        if (paletteCount === 2) {
+          previousPaletteColors = chatMessages.value[i].payload.colors
+          break
+        }
+      }
+    }
+    previousColors.value = paletteCount >= 2 ? [...previousPaletteColors] : []
 
     if (restoredColors.length > 0) {
       selectedColor1.value = restoredColors[0]

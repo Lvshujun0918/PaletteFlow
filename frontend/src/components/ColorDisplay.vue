@@ -24,30 +24,30 @@
           </div>
         </div>
         <!-- 对比差值显示 -->
-        <div v-if="showComparison && previousColors.length > index" class="color-diff">
+        <div v-if="showComparison && previousColors.length > index && hasColorChanged(color, previousColors[index])" class="color-diff">
           <div class="comparison-colors">
             <div class="prev-color-block" :style="{ backgroundColor: previousColors[index] }" :title="previousColors[index]"></div>
             <span class="arrow">→</span>
-            <div class="prev-color-block" :style="{ backgroundColor: colors[index] }" :title="previousColors[index]"></div>
-            <div class="hsl-changes">
-              <div class="hsl-item">
-                <span class="hsl-name">H</span>
-                <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dH)">
-                  {{ formatDiff(getHSLDiff(color, previousColors[index]).dH) }}°
-                </span>
-              </div>
-              <div class="hsl-item">
-                <span class="hsl-name">S</span>
-                <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dS)">
-                  {{ formatDiff(getHSLDiff(color, previousColors[index]).dS) }}%
-                </span>
-              </div>
-              <div class="hsl-item">
-                <span class="hsl-name">L</span>
-                <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dL)">
-                  {{ formatDiff(getHSLDiff(color, previousColors[index]).dL) }}%
-                </span>
-              </div>
+            <div class="current-color-block" :style="{ backgroundColor: color }" :title="color"></div>
+          </div>
+          <div class="hsl-changes">
+            <div v-if="getHSLDiff(color, previousColors[index]).dH !== 0" class="hsl-item">
+              <span class="hsl-name">H</span>
+              <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dH)">
+                {{ formatDiff(getHSLDiff(color, previousColors[index]).dH) }}°
+              </span>
+            </div>
+            <div v-if="getHSLDiff(color, previousColors[index]).dS !== 0" class="hsl-item">
+              <span class="hsl-name">S</span>
+              <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dS)">
+                {{ formatDiff(getHSLDiff(color, previousColors[index]).dS) }}%
+              </span>
+            </div>
+            <div v-if="getHSLDiff(color, previousColors[index]).dL !== 0" class="hsl-item">
+              <span class="hsl-name">L</span>
+              <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dL)">
+                {{ formatDiff(getHSLDiff(color, previousColors[index]).dL) }}%
+              </span>
             </div>
           </div>
         </div>
@@ -148,11 +148,17 @@ export default {
       return 'diff-zero'
     }
 
+    const hasColorChanged = (color1, color2) => {
+      const diff = getHSLDiff(color1, color2)
+      return diff.dH !== 0 || diff.dS !== 0 || diff.dL !== 0
+    }
+
     return {
       showComparison,
       getHSLDiff,
       formatDiff,
-      getDiffClass
+      getDiffClass,
+      hasColorChanged
     }
   },
   methods: {
@@ -297,6 +303,7 @@ export default {
 }
 
 .color-preview {
+  flex-grow: 1;
   width: 100%;
   height: 36px;
   border-radius: 5px 5px 0 0;
@@ -319,8 +326,8 @@ export default {
 .color-diff {
   padding: 8px 10px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
   font-size: 0.75rem;
   background: rgba(240, 240, 240, 0.5);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -330,9 +337,11 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
-.prev-color-block {
+.prev-color-block,
+.current-color-block {
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -356,9 +365,9 @@ export default {
 
 .hsl-changes {
   display: flex;
-  gap: 8px;
-  justify-content: flex-start;
+  gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .hsl-item {
