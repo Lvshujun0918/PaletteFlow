@@ -23,6 +23,19 @@
             </Tooltip>
           </div>
         </div>
+        <!-- 对比差值显示 -->
+        <div v-if="showComparison && previousColors.length > index" class="color-diff">
+          <span class="diff-label">相对上组:</span>
+          <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dH)">
+            H{{ formatDiff(getHSLDiff(color, previousColors[index]).dH) }}°
+          </span>
+          <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dS)">
+            S{{ formatDiff(getHSLDiff(color, previousColors[index]).dS) }}%
+          </span>
+          <span class="diff-value" :class="getDiffClass(getHSLDiff(color, previousColors[index]).dL)">
+            L{{ formatDiff(getHSLDiff(color, previousColors[index]).dL) }}%
+          </span>
+        </div>
       </div>
     </div>
 
@@ -61,9 +74,11 @@
 
 <script>
 import { notify } from '../utils/notify'
+import { getHSLDifference } from '../utils/colorUtils'
 import GlassButton from './GlassButton.vue'
 import Tooltip from './Tooltip.vue'
 import AdviceText from './AdviceText.vue'
+import { computed } from 'vue'
 
 export default {
   name: 'ColorDisplay',
@@ -75,6 +90,10 @@ export default {
   emits: ['regenerate', 'pick-color', 'select-color', 'hover-color'],
   props: {
     colors: {
+      type: Array,
+      default: () => []
+    },
+    previousColors: {
       type: Array,
       default: () => []
     },
@@ -93,6 +112,32 @@ export default {
     highlightedColor: {
       type: String,
       default: ''
+    }
+  },
+  setup(props) {
+    const showComparison = computed(() => {
+      return props.previousColors && props.previousColors.length > 0
+    })
+
+    const getHSLDiff = (color1, color2) => {
+      return getHSLDifference(color2, color1)
+    }
+
+    const formatDiff = (value) => {
+      return value > 0 ? `+${value}` : `${value}`
+    }
+
+    const getDiffClass = (value) => {
+      if (value > 0) return 'diff-positive'
+      if (value < 0) return 'diff-negative'
+      return 'diff-zero'
+    }
+
+    return {
+      showComparison,
+      getHSLDiff,
+      formatDiff,
+      getDiffClass
     }
   },
   methods: {
@@ -207,11 +252,9 @@ export default {
 }
 
 .color-cards {
-  display: flex;
-  flex: 1;
-  gap: 15px;
-  flex-shrink: 0;
-  flex-direction: column;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .color-card {
@@ -220,10 +263,11 @@ export default {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
-  height: 36px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  height: auto;
+  min-height: 36px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
   position: relative;
 }
 
@@ -238,9 +282,9 @@ export default {
 }
 
 .color-preview {
-  width: 108px;
+  width: 100%;
   height: 36px;
-  border-radius: 5px 0px 0px 5px;
+  border-radius: 5px 5px 0 0;
 }
 
 .color-info {
@@ -255,6 +299,45 @@ export default {
   font-family: 'Courier New', monospace;
   font-weight: 500;
   color: #333;
+}
+
+.color-diff {
+  padding: 5px 10px 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.75rem;
+  background: rgba(240, 240, 240, 0.5);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.diff-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.7rem;
+}
+
+.diff-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+}
+
+.diff-positive {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.diff-negative {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.diff-zero {
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
 }
 
 .copy-btn {

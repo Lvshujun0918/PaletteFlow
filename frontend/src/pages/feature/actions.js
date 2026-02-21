@@ -16,6 +16,7 @@ export function createActionsApi(deps) {
     loading,
     loadingSingle,
     currentColors,
+    previousColors, // 接收 previousColors
     currentPrompt,
     currentTimestamp,
     currentAdvice,
@@ -146,6 +147,9 @@ export function createActionsApi(deps) {
         router.replace(`/feature/${newId}`)
       }
 
+      // 保存当前配色为 previousColors（在更新前）
+      previousColors.value = [...currentColors.value]
+
       currentColors.value = response.data.colors
       currentTimestamp.value = response.data.timestamp * 1000
       currentAdvice.value = response.data.advice || ''
@@ -241,6 +245,10 @@ export function createActionsApi(deps) {
         target_index: targetIdx
       }
       const response = await regenerateSingleColor(payload)
+
+      // 保存当前配色为 previousColors（在更新前）
+      previousColors.value = [...currentColors.value]
+
       currentColors.value = response.data.colors
       currentPrompt.value = payload.prompt
       currentTimestamp.value = response.data.timestamp * 1000

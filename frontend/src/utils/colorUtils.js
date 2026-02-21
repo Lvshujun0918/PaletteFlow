@@ -94,3 +94,67 @@ export const simulateProtanopia = (hexColor) => applyMatrix(hexColor, MATRICES.p
 export const simulateTritanopia = (hexColor) => applyMatrix(hexColor, MATRICES.tritanopia)
 
 export const simulateAchromatopsia = (hexColor) => applyMatrix(hexColor, MATRICES.achromatopsia)
+
+/**
+ * 将 HEX 颜色转换为 HSL
+ * @param {string} hexColor - HEX颜色值 (如 #FF5733)
+ * @returns {{ h: number, s: number, l: number }} HSL对象，h为0-360度，s和l为0-100百分比
+ */
+export const hexToHSL = (hexColor) => {
+  const { r, g, b } = hexToRgb(hexColor)
+  const rNorm = r / 255
+  const gNorm = g / 255
+  const bNorm = b / 255
+
+  const max = Math.max(rNorm, gNorm, bNorm)
+  const min = Math.min(rNorm, gNorm, bNorm)
+  const delta = max - min
+
+  let h = 0
+  let s = 0
+  const l = (max + min) / 2
+
+  if (delta !== 0) {
+    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min)
+
+    switch (max) {
+      case rNorm:
+        h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) / 6
+        break
+      case gNorm:
+        h = ((bNorm - rNorm) / delta + 2) / 6
+        break
+      case bNorm:
+        h = ((rNorm - gNorm) / delta + 4) / 6
+        break
+    }
+  }
+
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100)
+  }
+}
+
+/**
+ * 计算两个颜色的 HSL 差值
+ * @param {string} color1 - 第一个颜色（HEX）
+ * @param {string} color2 - 第二个颜色（HEX）
+ * @returns {{ dH: number, dS: number, dL: number }} HSL差值对象
+ */
+export const getHSLDifference = (color1, color2) => {
+  const hsl1 = hexToHSL(color1)
+  const hsl2 = hexToHSL(color2)
+
+  // 色相环形差值计算（取较短路径）
+  let dH = hsl2.h - hsl1.h
+  if (dH > 180) dH -= 360
+  if (dH < -180) dH += 360
+
+  return {
+    dH: Math.round(dH),
+    dS: hsl2.s - hsl1.s,
+    dL: hsl2.l - hsl1.l
+  }
+}

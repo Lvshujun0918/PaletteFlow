@@ -95,6 +95,7 @@
         <div class="panel panel-right glass-panel">
           <ColorDisplay
             :colors="currentColors"
+            :previousColors="previousColors"
             :prompt="currentPrompt"
             :timestamp="currentTimestamp"
             :advice="currentAdvice"

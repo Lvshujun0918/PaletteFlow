@@ -17,6 +17,7 @@ export function useFeatureLogic() {
 
   const loading = ref(false)
   const currentColors = ref([...DEFAULT_COLORS])
+  const previousColors = ref([]) // 存储上一组配色，用于对比
   const currentPrompt = ref('默认配色方案')
   const currentTimestamp = ref(Date.now())
   const currentAdvice = ref('')
@@ -109,6 +110,7 @@ export function useFeatureLogic() {
     loading,
     loadingSingle,
     currentColors,
+    previousColors, // 传递给 actionsApi
     currentPrompt,
     currentTimestamp,
     currentAdvice,
@@ -246,6 +248,7 @@ export function useFeatureLogic() {
     loadSession: sessionApi.loadSession,
     deleteSession: sessionApi.deleteSession,
     currentColors,
+    previousColors, // 导出 previousColors 供组件使用
     currentPrompt,
     currentBackground,
     currentTimestamp,
