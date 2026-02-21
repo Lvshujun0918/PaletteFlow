@@ -107,7 +107,7 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 		}
 		normalized = append(normalized, candidate)
 	}
-
+	log.Printf("[INFO] Using %s to replace single color:\n", req.Prompt)
 	result, err := ai.GeneratePaletteWithSingleColor(normalized, req.TargetIndex, req.Prompt)
 	if err != nil {
 		log.Printf("[ERROR] AI single color generation failed: %v, fallback to replace target only", err)
@@ -152,11 +152,12 @@ func RefinePaletteHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refine palette"})
 		return
 	}
+	log.Printf("[INFO] Using %s to refine colors:\n", req.Prompt)
 
 	response := ColorPaletteResponse{
-		Colors:    result.Colors,
-		Advice:    result.Advice,
-		Timestamp: time.Now().Unix(),
+		Colors:      result.Colors,
+		Advice:      result.Advice,
+		Timestamp:   time.Now().Unix(),
 		Description: fmt.Sprintf("基于提示词 '%s' 调整的配色", req.Prompt),
 	}
 
