@@ -153,10 +153,32 @@ export function useFeatureLogic() {
 
   const persistBeforeLeave = () => {
     try {
-      storageApi.saveCurrentSession()
+      // 【数据保护】保存当前聊天记录
+      if (chatMessages.value && chatMessages.value.length > 0) {
+        storageApi.saveChatMessagesToStorage()
+      }
+      // 【数据保护】保存当前会话
+      if (currentSessionId.value && chatMessages.value.length > 1) {
+        storageApi.saveCurrentSession()
+      }
+      // 保存历史记录
       storageApi.saveHistoriesToStorage()
     } catch (error) {
       console.error('离开页面前保存失败:', error)
+      // 【数据保护】即使失败也尝试保存到临时存储
+      try {
+        const emergencyBackup = {
+          timestamp: Date.now(),
+          chatMessages: chatMessages.value,
+          currentSessionId: currentSessionId.value,
+          currentColors: currentColors.value,
+          currentPrompt: currentPrompt.value
+        }
+        localStorage.setItem('ai_palette_emergency_backup', JSON.stringify(emergencyBackup))
+        console.log('已保存紧急备份')
+      } catch (backupError) {
+        console.error('紧急备份失败:', backupError)
+      }
     }
   }
 
@@ -175,6 +197,40 @@ export function useFeatureLogic() {
   onMounted(async () => {
     window.addEventListener('beforeunload', handleBeforeUnload)
     window.addEventListener('pagehide', handlePageHide)
+
+    // 【数据保护】检查紧急备份
+    try {
+      const emergencyBackup = localStorage.getItem('ai_palette_emergency_backup')
+      if (emergencyBackup) {
+        const backup = JSON.parse(emergencyBackup)
+        const backupAge = Date.now() - backup.timestamp
+        // 如果备份在 5 分钟内，提示用户恢复
+        if (backupAge < 5 * 60 * 1000 && backup.chatMessages && backup.chatMessages.length > 1) {
+          console.log('发现紧急备份，可能需要恢复')
+          // 这里可以添加用户提示逻辑
+        }
+        // 清除旧备份
+        localStorage.removeItem('ai_palette_emergency_backup')
+      }
+    } catch (error) {
+      console.error('检查紧急备份失败:', error)
+    }
+
+    // 【数据保护】定期自动保存（每 30 秒）
+    const autoSaveInterval = setInterval(() => {
+      if (currentSessionId.value && chatMessages.value.length > 1) {
+        try {
+          storageApi.saveChatMessagesToStorage()
+        } catch (error) {
+          console.error('自动保存失败:', error)
+        }
+      }
+    }, 30000)
+
+    // 清理定时器
+    onBeforeUnmount(() => {
+      clearInterval(autoSaveInterval)
+    })
 
     try {
       await healthCheck()

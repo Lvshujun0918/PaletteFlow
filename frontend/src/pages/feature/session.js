@@ -40,6 +40,26 @@ export function createSessionApi(deps) {
   }
 
   const startNewConversation = () => {
+    // 【数据保护】先保存当前会话（如果存在且有内容）
+    if (currentSessionId.value && chatMessages.value.length > 1) {
+      try {
+        saveCurrentSession()
+      } catch (error) {
+        console.error('保存当前会话失败:', error)
+      }
+    }
+    // 如果没有sessionId但有聊天记录，创建临时会话保存
+    else if (!currentSessionId.value && chatMessages.value.length > 1) {
+      try {
+        const tempId = Date.now()
+        currentSessionId.value = tempId
+        currentSessionTheme.value = '未命名会话 ' + new Date().toLocaleString('zh-CN')
+        saveCurrentSession()
+      } catch (error) {
+        console.error('保存临时会话失败:', error)
+      }
+    }
+
     clearSingleColorMode()
     currentColors.value = []
     previousColors.value = [] // 清空上一组配色
@@ -146,6 +166,15 @@ export function createSessionApi(deps) {
   }
 
   const restoreConversation = () => {
+    // 【数据保护】保存当前会话避免覆盖
+    if (currentSessionId.value && chatMessages.value.length > 1) {
+      try {
+        saveCurrentSession()
+      } catch (error) {
+        console.error('保存当前会话失败:', error)
+      }
+    }
+
     if (savedSessions.value.length === 0) {
       loadSessionsFromStorage()
     }
