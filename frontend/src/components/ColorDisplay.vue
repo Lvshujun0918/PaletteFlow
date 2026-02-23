@@ -6,7 +6,11 @@
         v-for="(color, index) in colors"
         :key="index"
         class="color-card glass-card"
-        :class="{ 'is-highlighted': isHighlightedColor(color) }"
+        :class="{
+          'is-highlighted': isHighlightedColor(color),
+          'color-card--changed': isChangedColor(color, index),
+          'color-card--unchanged': !isChangedColor(color, index)
+        }"
       >
         <div class="color-preview" :style="{ backgroundColor: color }"></div>
         <div class="color-info">
@@ -153,12 +157,20 @@ export default {
       return diff.dH !== 0 || diff.dS !== 0 || diff.dL !== 0
     }
 
+    const isChangedColor = (color, index) => {
+      if (!showComparison.value || !props.previousColors || props.previousColors.length <= index) {
+        return false
+      }
+      return hasColorChanged(color, props.previousColors[index])
+    }
+
     return {
       showComparison,
       getHSLDiff,
       formatDiff,
       getDiffClass,
-      hasColorChanged
+      hasColorChanged,
+      isChangedColor
     }
   },
   methods: {
@@ -276,6 +288,8 @@ export default {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-auto-flow: dense;
+  grid-auto-rows: 36px;
 }
 
 .color-card {
@@ -290,6 +304,14 @@ export default {
   justify-content: flex-start;
   align-items: stretch;
   position: relative;
+}
+
+.color-card--unchanged {
+  grid-row: span 2;
+}
+
+.color-card--changed {
+  grid-row: span 3;
 }
 
 .color-card:hover {
@@ -520,11 +542,6 @@ export default {
   .color-display {
     padding: 15px;
     gap: 15px;
-  }
-
-  .color-cards {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 10px;
   }
 
   .action-btn {
