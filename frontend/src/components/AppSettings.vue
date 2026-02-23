@@ -8,7 +8,7 @@
         :class="{ active: activeTab === tab.id }"
         @click="activeTab = tab.id"
       >
-        <span class="menu-icon">{{ tab.icon }}</span>
+        <component :is="`Icon${tab.icon}`" size="18" class="menu-icon" />
         <span class="menu-label">{{ tab.label }}</span>
       </button>
     </div>
@@ -137,9 +137,9 @@ export default {
     const backupFileInput = ref(null)
 
     const tabs = [
-      { id: 'overview', label: '概览', icon: '👁️' },
-      { id: 'storage', label: '存储详情', icon: '💾' },
-      { id: 'backup', label: '备份', icon: '📦' }
+      { id: 'overview', label: '概览', icon: 'Eye' },
+      { id: 'storage', label: '存储详情', icon: 'HardDrive' },
+      { id: 'backup', label: '备份', icon: 'Package' }
     ]
 
     const formatBytes = (bytes) => {
@@ -272,6 +272,10 @@ export default {
   color: #475569;
 }
 
+.settings-menu-item:hover .menu-icon {
+  color: #475569;
+}
+
 .settings-menu-item.active {
   background: rgba(37, 99, 235, 0.1);
   color: #2563eb;
@@ -279,10 +283,17 @@ export default {
   font-weight: 500;
 }
 
+.settings-menu-item.active .menu-icon {
+  color: #2563eb;
+}
+
 .menu-icon {
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
-  text-align: center;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .menu-label {
