@@ -88,6 +88,25 @@ export default {
   width: min(90vw, 420px);
 }
 
+.modal-card--settings {
+  width: min(98vw, 1000px);
+  max-height: 85vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+}
+
+.modal-card--settings .modal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+
+.modal-card--settings .modal-actions {
+  flex-shrink: 0;
+}
+
 .modal-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);

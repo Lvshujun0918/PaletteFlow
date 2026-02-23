@@ -10,6 +10,13 @@
             <h1>PaletteFlow</h1>
             <p>配色，易如反掌</p>
           </div>
+          <div class="header-actions">
+            <Tooltip text="设置" position="bottom">
+              <button class="header-action-btn" @click="openSettingsModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#333333" d="m9.25 22l-.4-3.2q-.325-.125-.612-.3t-.563-.375L4.7 19.375l-2.75-4.75l2.575-1.95Q4.5 12.5 4.5 12.338v-.675q0-.163.025-.338L1.95 9.375l2.75-4.75l2.975 1.25q.275-.2.575-.375t.6-.3l.4-3.2h5.5l.4 3.2q.325.125.613.3t.562.375l2.975-1.25l2.75 4.75l-2.575 1.95q.025.175.025.338v.674q0 .163-.05.338l2.575 1.95l-2.75 4.75l-2.95-1.25q-.275.2-.575.375t-.6.3l-.4 3.2zm2.8-6.5q1.45 0 2.475-1.025T15.55 12t-1.025-2.475T12.05 8.5q-1.475 0-2.488 1.025T8.55 12t1.013 2.475T12.05 15.5"/></svg>
+              </button>
+            </Tooltip>
+          </div>
         </div>
       </div>
 
@@ -192,6 +199,21 @@
           </GlassButton>
         </template>
       </AppModal>
+
+      <AppModal :show="showSettingsModal" variant="settings" @close="closeSettingsModal">
+        <template #header>
+          <h3 class="modal-title">设置</h3>
+        </template>
+        <AppSettings
+          :projectInfo="projectInfo"
+          :storageSummary="storageSummary"
+          :storageItems="storageItems"
+          @close="closeSettingsModal"
+        />
+        <template #actions>
+          <GlassButton variant="secondary" @click="closeSettingsModal">完成</GlassButton>
+        </template>
+      </AppModal>
     </div>
   </div>
 </template>
@@ -207,8 +229,10 @@ import ChatContrastMessage from '../components/ChatContrastMessage.vue'
 import ChatColorblindMessage from '../components/ChatColorblindMessage.vue'
 import ColorPickerModal from '../components/ColorPickerModal.vue'
 import AppModal from '../components/AppModal.vue'
+import AppSettings from '../components/AppSettings.vue'
 import logo from '../assets/logo.png'
 import Tooltip from '../components/Tooltip.vue'
+import { STORAGE_KEY, CHAT_STORAGE_KEY, SESSIONS_STORAGE_KEY } from './feature/constants'
 
 export default {
   name: 'App',
@@ -217,6 +241,7 @@ export default {
     Notification,
     GlassButton,
     AppModal,
+    AppSettings,
     ChatPaletteMessage,
     ChatContrastMessage,
     ChatColorblindMessage,
@@ -233,6 +258,21 @@ export default {
     const hoveredAdviceColor = ref('')
     const showRestoreConfirm = ref(false)
     const pendingRestoreIndex = ref(-1)
+    const showSettingsModal = ref(false)
+    const backupFileInput = ref(null)
+    const storageItems = ref([])
+    const storageSummary = ref({
+      keyCount: 0,
+      totalSize: '0 B',
+      sessionCount: 0,
+      chatCount: 0
+    })
+    const projectInfo = ref({
+      name: 'PaletteFlow',
+      version: 'v1.0.0',
+      mode: import.meta.env.MODE || 'production',
+      currentSession: '未命名会话'
+    })
 
     const handleAdviceColorHover = (color) => {
       hoveredAdviceColor.value = color || ''
@@ -253,6 +293,80 @@ export default {
         featureLogic.handleRestoreToMessage(pendingRestoreIndex.value)
       }
       cancelRestoreToMessage()
+    }
+
+    const openSettingsModal = () => {
+      projectInfo.value.currentSession = featureLogic.currentSessionTheme?.value || '未命名会话'
+      refreshStorageInfo()
+      showSettingsModal.value = true
+    }
+
+    const closeSettingsModal = () => {
+      showSettingsModal.value = false
+    }
+
+    const formatBytes = (bytes) => {
+      if (bytes <= 0) return '0 B'
+      if (bytes < 1024) return `${bytes} B`
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+    }
+
+    const getStorageLabel = (key) => {
+      if (key === STORAGE_KEY) return '历史记录'
+      if (key === CHAT_STORAGE_KEY) return '聊天记录'
+      if (key === SESSIONS_STORAGE_KEY) return '会话列表'
+      if (key.endsWith('_backup')) return '自动备份'
+      if (key.includes('emergency')) return '紧急备份'
+      return key
+    }
+
+    const refreshStorageInfo = () => {
+      const items = []
+      let totalBytes = 0
+      let sessionCount = 0
+      let chatCount = 0
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key || !key.startsWith('ai_color_palette')) continue
+
+        const rawValue = localStorage.getItem(key) || ''
+        const size = new Blob([rawValue]).size
+        totalBytes += size
+
+        if (key === SESSIONS_STORAGE_KEY) {
+          try {
+            const parsed = JSON.parse(rawValue)
+            sessionCount = Array.isArray(parsed) ? parsed.length : 0
+          } catch (error) {
+            sessionCount = 0
+          }
+        }
+
+        if (key === CHAT_STORAGE_KEY) {
+          try {
+            const parsed = JSON.parse(rawValue)
+            chatCount = Array.isArray(parsed) ? parsed.length : 0
+          } catch (error) {
+            chatCount = 0
+          }
+        }
+
+        items.push({
+          key,
+          name: getStorageLabel(key),
+          size: formatBytes(size)
+        })
+      }
+
+      storageItems.value = items.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+      storageSummary.value = {
+        keyCount: items.length,
+        totalSize: formatBytes(totalBytes),
+        sessionCount,
+        chatCount
+      }
     }
     
     // 判断是否是最后一条palette消息
@@ -275,7 +389,14 @@ export default {
       showRestoreConfirm,
       openRestoreConfirm,
       cancelRestoreToMessage,
-      confirmRestoreToMessage
+      confirmRestoreToMessage,
+      showSettingsModal,
+      projectInfo,
+      storageItems,
+      storageSummary,
+      openSettingsModal,
+      closeSettingsModal,
+      refreshStorageInfo
     }
   }
 }
@@ -316,6 +437,30 @@ export default {
   flex-shrink: 0;
   flex-direction: row;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.header-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 .header-text {
@@ -928,6 +1073,11 @@ export default {
   background: rgba(229, 62, 62, 0.1);
   border-radius: 8px;
 }
+
+.hidden-file-input {
+  display: none;
+}
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .main-content {
