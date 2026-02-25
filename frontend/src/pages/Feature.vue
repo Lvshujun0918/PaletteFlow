@@ -85,14 +85,16 @@
                   <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
                 </div>
-                <GlassButton v-if="!loading" class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
-                  @click="handleSendPrompt">
-                  <IconSend size="18" />发送
-                </GlassButton>
-                <GlassButton v-else class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
-                  @click="handleSendPrompt">
-                  生成中...
-                </GlassButton>
+                <div class="send-actions">
+                  <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
+                    @click="handleSendPrompt">
+                    <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : '发送' }}
+                  </GlassButton>
+                  <GlassButton class="inspiration-btn" variant="secondary" :loading="loadingInspiration"
+                    :disabled="loading || loadingInspiration" @click="handleInspirationSend">
+                    <IconSparkles v-if="!loadingInspiration" size="18" />灵感
+                  </GlassButton>
+                </div>
               </div>
             </div>
           </div>
@@ -233,6 +235,7 @@ import AppSettings from '../components/AppSettings.vue'
 import logo from '../assets/logo.png'
 import Tooltip from '../components/Tooltip.vue'
 import { STORAGE_KEY, CHAT_STORAGE_KEY, SESSIONS_STORAGE_KEY } from './feature/constants'
+import { generateInspirationText } from '../utils/api'
 
 export default {
   name: 'App',
@@ -256,6 +259,7 @@ export default {
   setup() {
     const featureLogic = useFeatureLogic()
     const hoveredAdviceColor = ref('')
+    const loadingInspiration = ref(false)
     const showRestoreConfirm = ref(false)
     const pendingRestoreIndex = ref(-1)
     const showSettingsModal = ref(false)
@@ -293,6 +297,29 @@ export default {
         featureLogic.handleRestoreToMessage(pendingRestoreIndex.value)
       }
       cancelRestoreToMessage()
+    }
+
+    const handleInspirationSend = async () => {
+      if (featureLogic.loading.value || loadingInspiration.value) return
+
+      loadingInspiration.value = true
+      try {
+        const response = await generateInspirationText()
+        const text = (response?.data?.text || '').trim()
+
+        if (!text) {
+          featureLogic.notify('灵感生成失败，请重试', 'error')
+          return
+        }
+
+        featureLogic.chatInput.value = text
+        featureLogic.handleSendPrompt()
+      } catch (error) {
+        console.error('获取灵感文案失败:', error)
+        featureLogic.notify('灵感生成失败，请稍后再试', 'error')
+      } finally {
+        loadingInspiration.value = false
+      }
     }
 
     const openSettingsModal = () => {
@@ -385,7 +412,9 @@ export default {
       ...featureLogic,
       isLastPaletteMessage,
       hoveredAdviceColor,
+      loadingInspiration,
       handleAdviceColorHover,
+      handleInspirationSend,
       showRestoreConfirm,
       openRestoreConfirm,
       cancelRestoreToMessage,
@@ -886,6 +915,17 @@ export default {
   padding: 12px 22px;
   font-size: 0.95rem;
   min-height: 42px;
+}
+
+.send-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspiration-btn {
+  min-height: 42px;
+  padding: 12px 16px;
 }
 
 .input-footer {

@@ -17,7 +17,8 @@ import {
   Package,
   Download,
   Upload,
-  AlertCircle
+	AlertCircle,
+  Sparkles
 } from 'lucide-vue-next'
 
 const app = createApp(App)
@@ -36,7 +37,8 @@ const icons = {
   Package,
   Download,
   Upload,
-  AlertCircle
+	AlertCircle,
+  Sparkles
 }
 
 Object.entries(icons).forEach(([name, component]) => {
