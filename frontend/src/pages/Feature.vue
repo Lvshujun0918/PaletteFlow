@@ -85,6 +85,12 @@
                   <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
                 </div>
+                <div class="color-count-control">
+                  <label for="colorCount" class="color-count-label">颜色数</label>
+                  <select id="colorCount" v-model.number="colorCount" class="color-count-select" :disabled="loading">
+                    <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
+                  </select>
+                </div>
                 <div class="send-actions">
                   <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
                     @click="handleSendPrompt">
@@ -921,6 +927,27 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.color-count-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-count-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.color-count-select {
+  min-width: 72px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+  color: #1f2937;
 }
 
 .inspiration-btn {

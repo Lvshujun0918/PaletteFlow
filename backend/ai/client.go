@@ -71,10 +71,14 @@ type PaletteResult struct {
 }
 
 // GenerateColorPalette 使用AI生成配色方案，支持3次重试
-func GenerateColorPalette(prompt string) (*PaletteResult, error) {
-	systemPrompt := buildBaseSystemPrompt()
+func GenerateColorPalette(prompt string, colorCount int) (*PaletteResult, error) {
+	if colorCount < 1 || colorCount > 10 {
+		return nil, fmt.Errorf("colorCount must be between 1 and 10")
+	}
+
+	systemPrompt := buildBaseSystemPrompt(colorCount)
 	userPrompt := fmt.Sprintf("请你帮我生成这样的配色：%s", prompt)
-	return retryGeneratePalette(systemPrompt, userPrompt)
+	return retryGeneratePalette(systemPrompt, userPrompt, colorCount)
 }
 
 // GenerateInspirationText 生成艺术气息灵感短句（目标20字）
@@ -147,9 +151,9 @@ func GenerateInspirationText() (string, error) {
 
 // GeneratePaletteWithSingleColor 仅替换指定颜色，保持其他颜色不变
 func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt string) (*PaletteResult, error) {
-	normalized, ok := normalizeColors(baseColors)
+	normalized, ok := normalizeColorsInRange(baseColors, 1, 10)
 	if !ok {
-		return nil, fmt.Errorf("base colors must be 5 valid hex values")
+		return nil, fmt.Errorf("base colors must contain 1 to 10 valid hex values")
 	}
 	if targetIndex < 0 || targetIndex >= len(normalized) {
 		return nil, fmt.Errorf("targetIndex out of range")
@@ -157,14 +161,15 @@ func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt
 
 	systemPrompt := buildSingleColorSystemPrompt()
 	userPrompt := fmt.Sprintf(
-		"现有配色（顺序固定）为：%s。仅替换第%d个颜色 %s，依据用户的新需求：%s，同时注意与其余颜色的协调性。保持其余颜色不变，返回新的完整5色方案及使用建议。",
+		"现有配色（顺序固定）为：%s。仅替换第%d个颜色 %s，依据用户的新需求：%s，同时注意与其余颜色的协调性。保持其余颜色不变，返回新的完整%d色方案及使用建议。",
 		strings.Join(normalized, ", "),
 		targetIndex+1,
 		normalized[targetIndex],
 		prompt,
+		len(normalized),
 	)
 
-	result, err := retryGeneratePalette(systemPrompt, userPrompt)
+	result, err := retryGeneratePalette(systemPrompt, userPrompt, len(normalized))
 	if err != nil {
 		return nil, err
 	}
@@ -186,31 +191,46 @@ func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt
 	return result, nil
 }
 
-// RefinePalette 基于现有配色方案进行微调
-func RefinePalette(currentColors []string, prompt string) (*PaletteResult, error) {
-	normalized, ok := normalizeColors(currentColors)
+// RefinePalette 基于现有配色方案进行微调，可指定目标数量
+func RefinePalette(currentColors []string, prompt string, targetColorCount int) (*PaletteResult, error) {
+	normalized, ok := normalizeColorsInRange(currentColors, 1, 10)
 	if !ok {
-		return nil, fmt.Errorf("current colors must be 5 valid hex values")
+		return nil, fmt.Errorf("current colors must contain 1 to 10 valid hex values")
 	}
 
-	systemPrompt := buildBaseSystemPrompt()
+	if targetColorCount < 1 || targetColorCount > 10 {
+		return nil, fmt.Errorf("targetColorCount must be between 1 and 10")
+	}
+
+	systemPrompt := buildBaseSystemPrompt(targetColorCount)
+	originalCount := len(normalized)
+	countInstruction := "请保留原有配色基调并进行微调。"
+	if targetColorCount > originalCount {
+		countInstruction = fmt.Sprintf("目标数量从%d增加到%d：请在保留原方案风格的前提下补充%d个新颜色，新颜色需与原有颜色和谐过渡并拉开层次。", originalCount, targetColorCount, targetColorCount-originalCount)
+	} else if targetColorCount < originalCount {
+		countInstruction = fmt.Sprintf("目标数量从%d减少到%d：请合并或去除冗余颜色，但保留核心风格与视觉层次。", originalCount, targetColorCount)
+	}
+
 	userPrompt := fmt.Sprintf(
-		"现有配色为：%s。用户希望在此基础上进行调整：%s。请根据用户的修改意见，生成一个新的5色方案，必须要与原方案具有**较大的相似性**。如果不涉及具体颜色修改，请保持原有风格。返回新的完整5色方案及使用建议。",
+		"现有配色为：%s。用户希望在此基础上进行调整：%s。%s 请根据用户的修改意见，生成一个新的%d色方案，必须要与原方案具有**较大的相似性**。如果不涉及具体颜色修改，请保持原有风格。返回新的完整%d色方案及使用建议。",
 		strings.Join(normalized, ", "),
 		prompt,
+		countInstruction,
+		targetColorCount,
+		targetColorCount,
 	)
 
-	return retryGeneratePalette(systemPrompt, userPrompt)
+	return retryGeneratePalette(systemPrompt, userPrompt, targetColorCount)
 }
 
-func retryGeneratePalette(systemPrompt, userPrompt string) (*PaletteResult, error) {
+func retryGeneratePalette(systemPrompt, userPrompt string, colorCount int) (*PaletteResult, error) {
 	const maxRetries = 3
 	var lastErr error
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Printf("[INFO] Attempting to generate palette (attempt %d/%d)", attempt, maxRetries)
 
-		result, err := attemptGenerateWithPrompt(systemPrompt, userPrompt)
+		result, err := attemptGenerateWithPrompt(systemPrompt, userPrompt, colorCount)
 		if err == nil {
 			return result, nil
 		}
@@ -227,13 +247,13 @@ func retryGeneratePalette(systemPrompt, userPrompt string) (*PaletteResult, erro
 	return nil, fmt.Errorf("all %d retry attempts failed, last error: %w", maxRetries, lastErr)
 }
 
-func attemptGenerateWithPrompt(systemPrompt, userPrompt string) (*PaletteResult, error) {
+func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) (*PaletteResult, error) {
 	cfg := config.AppConfig
 	if cfg.AIAPIKey == "" {
 		return nil, fmt.Errorf("AI API key not configured")
 	}
 
-	paletteTool := buildPaletteToolDefinition()
+	paletteTool := buildPaletteToolDefinition(colorCount)
 	toolChoice := "auto"
 
 	reqBody := ChatRequest{
@@ -296,7 +316,7 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string) (*PaletteResult,
 			if call.Function.Name != paletteToolName {
 				continue
 			}
-			result, err := parseToolCallResult(call)
+			result, err := parseToolCallResult(call, colorCount)
 			if err != nil {
 				return nil, err
 			}
@@ -307,7 +327,7 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string) (*PaletteResult,
 	}
 
 	if message.Content != "" {
-		result, ok := parseResultFromContent(message.Content)
+		result, ok := parseResultFromContent(message.Content, colorCount)
 		if ok {
 			log.Println("[INFO] AI returned result in content, using parsed result")
 			return result, nil
@@ -317,16 +337,16 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string) (*PaletteResult,
 	return nil, fmt.Errorf("AI Tool Call Failed: no tool_calls and no parsable result in content")
 }
 
-func buildBaseSystemPrompt() string {
-	return `
-你是一个专业的配色设计师。用户会给你一个配色需求描述，你需要返回5个精确的HEX颜色代码，并给出配色使用建议。
+func buildBaseSystemPrompt(colorCount int) string {
+	return fmt.Sprintf(`
+你是一个专业的配色设计师。用户会给你一个配色需求描述，你需要返回%d个精确的HEX颜色代码，并给出配色使用建议。
 你必须通过调用 return_palette 工具函数返回结果，不要输出任何自然语言文本。
 1. 采用【渐变过渡技巧】，在冲突色之间创建中间色调缓冲层
 2. 运用【色彩比例法则】：主色占60%，次色占30%，点缀色占10%
 3. 建立【色彩秩序】：通过明度阶梯（从20%到80%亮度）建立视觉节奏
 4. 添加【中性调和剂】：适当加入平衡色
 5. 最终效果需呈现【动态和谐】- 既有视觉冲击力，又保持整体统一性
-`
+`, colorCount)
 }
 
 func buildSingleColorSystemPrompt() string {
@@ -357,14 +377,14 @@ func extractColors(text string) []string {
 	return colors
 }
 
-func parseResultFromContent(content string) (*PaletteResult, bool) {
+func parseResultFromContent(content string, colorCount int) (*PaletteResult, bool) {
 	var payload struct {
 		Colors []string `json:"colors"`
 		Advice string   `json:"advice"`
 	}
 	if err := json.Unmarshal([]byte(content), &payload); err == nil {
-		if len(payload.Colors) == 5 {
-			normalized, ok := normalizeColors(payload.Colors)
+		if len(payload.Colors) == colorCount {
+			normalized, ok := normalizeColorsInRange(payload.Colors, colorCount, colorCount)
 			if ok {
 				return &PaletteResult{Colors: normalized, Advice: strings.TrimSpace(payload.Advice)}, true
 			}
@@ -372,14 +392,14 @@ func parseResultFromContent(content string) (*PaletteResult, bool) {
 	}
 
 	colors := extractColors(content)
-	if len(colors) >= 5 {
-		return &PaletteResult{Colors: colors[:5]}, true
+	if len(colors) >= colorCount {
+		return &PaletteResult{Colors: colors[:colorCount]}, true
 	}
 	return nil, false
 }
 
-func normalizeColors(colors []string) ([]string, bool) {
-	if len(colors) != 5 {
+func normalizeColorsInRange(colors []string, minCount, maxCount int) ([]string, bool) {
+	if len(colors) < minCount || len(colors) > maxCount {
 		return nil, false
 	}
 	normalized := make([]string, 0, len(colors))
@@ -393,7 +413,7 @@ func normalizeColors(colors []string) ([]string, bool) {
 	return normalized, true
 }
 
-func buildPaletteToolDefinition() ToolDefinition {
+func buildPaletteToolDefinition(colorCount int) ToolDefinition {
 	return ToolDefinition{
 		Type: "function",
 		Function: ToolFunction{
@@ -412,13 +432,13 @@ func buildPaletteToolDefinition() ToolDefinition {
 				"properties": map[string]interface{}{
 					"colors": map[string]interface{}{
 						"type":        "array",
-						"description": "包含且仅包含 5 个 HEX 颜色字符串，格式必须为 #RRGGBB。",
+						"description": fmt.Sprintf("包含且仅包含 %d 个 HEX 颜色字符串，格式必须为 #RRGGBB。", colorCount),
 						"items": map[string]interface{}{
 							"type":    "string",
 							"pattern": "^#[0-9A-Fa-f]{6}$",
 						},
-						"minItems": 5,
-						"maxItems": 5,
+						"minItems": colorCount,
+						"maxItems": colorCount,
 					},
 					"advice": map[string]interface{}{
 						"type":        "string",
@@ -435,7 +455,7 @@ func buildPaletteToolDefinition() ToolDefinition {
 
 }
 
-func parseToolCallResult(call ToolCall) (*PaletteResult, error) {
+func parseToolCallResult(call ToolCall, colorCount int) (*PaletteResult, error) {
 	if strings.ToLower(call.Type) != "function" {
 		return nil, fmt.Errorf("unexpected tool call type: %s", call.Type)
 	}
@@ -452,8 +472,8 @@ func parseToolCallResult(call ToolCall) (*PaletteResult, error) {
 		return nil, fmt.Errorf("parse tool call arguments: %w", err)
 	}
 
-	if len(payload.Colors) != 5 {
-		return nil, fmt.Errorf("tool call returned %d colors, expected 5", len(payload.Colors))
+	if len(payload.Colors) != colorCount {
+		return nil, fmt.Errorf("tool call returned %d colors, expected %d", len(payload.Colors), colorCount)
 	}
 
 	normalized := make([]string, 0, len(payload.Colors))

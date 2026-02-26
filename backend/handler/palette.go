@@ -15,7 +15,8 @@ import (
 )
 
 type ColorPaletteRequest struct {
-	Prompt string `json:"prompt" binding:"required"`
+	Prompt     string `json:"prompt" binding:"required"`
+	ColorCount int    `json:"color_count"`
 }
 
 type SingleColorRequest struct {
@@ -34,6 +35,7 @@ type ColorPaletteResponse struct {
 type RefinePaletteRequest struct {
 	CurrentColors []string `json:"current_colors" binding:"required"`
 	Prompt        string   `json:"prompt" binding:"required"`
+	ColorCount    int      `json:"color_count"`
 }
 
 type InspirationResponse struct {
@@ -50,11 +52,20 @@ func GeneratePaletteHandler(c *gin.Context) {
 
 	// 尝试使用AI生成配色
 	log.Printf("[INFO] Using %s to create colors:\n", req.Prompt)
+	colorCount := req.ColorCount
+	if colorCount == 0 {
+		colorCount = 5
+	}
+	if colorCount < 1 || colorCount > 10 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "color_count must be between 1 and 10"})
+		return
+	}
+
 	if strings.Contains(req.Prompt, "烧鸡") {
 		log.Printf("[INFO] Bingo~ %s\n", req.Prompt)
-		colors := []string{"#000000", "#FFFFFF", "#1E3A5F", "#2D5B8A", "#E5E5E5"}
+		colors := []string{"#000000", "#FFFFFF", "#1E3A5F", "#2D5B8A", "#E5E5E5", "#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6"}
 		response := ColorPaletteResponse{
-			Colors:      colors,
+			Colors:      colors[:colorCount],
 			Advice:      "你找到了隐藏彩蛋~这是专属于作者烧鸡的配色方案，烧鸡yyds！",
 			Timestamp:   time.Now().Unix(),
 			Description: "你找到了隐藏彩蛋~这是专属于作者烧鸡的配色方案！",
@@ -62,13 +73,13 @@ func GeneratePaletteHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	result, err := ai.GenerateColorPalette(req.Prompt)
+	result, err := ai.GenerateColorPalette(req.Prompt, colorCount)
 	if err != nil {
 		log.Printf("[ERROR] AI generation failed: %v, falling back to random generation", err)
 		// 降级到随机生成
 		rand.Seed(time.Now().UnixNano())
 		result = &ai.PaletteResult{
-			Colors: generateRandomColors(5, req.Prompt),
+			Colors: generateRandomColors(colorCount, req.Prompt),
 			Advice: "由于网络原因，AI调用失败。本次为随机生成配色，可作为灵感草案使用。建议在主色与辅色之间调整明度对比以提升层次感。",
 		}
 	}
@@ -91,8 +102,8 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 		return
 	}
 
-	if len(req.BaseColors) != 5 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "base_colors must contain 5 colors"})
+	if len(req.BaseColors) < 1 || len(req.BaseColors) > 10 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "base_colors must contain between 1 and 10 colors"})
 		return
 	}
 
@@ -102,7 +113,7 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 	}
 
 	hexRe := regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
-	normalized := make([]string, 0, 5)
+	normalized := make([]string, 0, len(req.BaseColors))
 	for _, color := range req.BaseColors {
 		candidate := strings.ToUpper(strings.TrimSpace(color))
 		if !hexRe.MatchString(candidate) {
@@ -150,7 +161,16 @@ func RefinePaletteHandler(c *gin.Context) {
 		return
 	}
 
-	result, err := ai.RefinePalette(req.CurrentColors, req.Prompt)
+	colorCount := req.ColorCount
+	if colorCount == 0 {
+		colorCount = len(req.CurrentColors)
+	}
+	if colorCount < 1 || colorCount > 10 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "color_count must be between 1 and 10"})
+		return
+	}
+
+	result, err := ai.RefinePalette(req.CurrentColors, req.Prompt, colorCount)
 	if err != nil {
 		log.Printf("[ERROR] Refine palette failed: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refine palette"})

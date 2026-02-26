@@ -23,6 +23,7 @@ export function useFeatureLogic() {
   const currentAdvice = ref('')
   const currentSessionId = ref(null)
   const currentSessionTheme = ref('')
+  const colorCount = ref(5)
   const histories = ref([])
   const chatInput = ref('')
   const chatMessages = ref([createWelcomeMessage()])
@@ -117,6 +118,8 @@ export function useFeatureLogic() {
     currentAdvice,
     currentSessionId,
     currentSessionTheme,
+    colorCount,
+    colorCount,
     histories,
     chatInput,
     chatMessages,
@@ -311,6 +314,7 @@ export function useFeatureLogic() {
     currentTimestamp,
     currentAdvice,
     currentSessionTheme,
+    colorCount,
     histories,
     chatInput,
     chatMessages,

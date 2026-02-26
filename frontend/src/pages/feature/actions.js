@@ -22,6 +22,7 @@ export function createActionsApi(deps) {
     currentAdvice,
     currentSessionId,
     currentSessionTheme,
+    colorCount,
     histories,
     chatInput,
     chatMessages,
@@ -126,12 +127,12 @@ export function createActionsApi(deps) {
       let response
       let isRefinement = false
 
-      if (currentSessionId.value && currentColors.value.length === 5) {
+      if (currentSessionId.value && currentColors.value.length > 0) {
         isRefinement = true
-        response = await refinePalette(currentColors.value, prompt)
+        response = await refinePalette(currentColors.value, prompt, colorCount.value)
         currentPrompt.value = prompt
       } else {
-        response = await generatePalette(prompt)
+        response = await generatePalette(prompt, colorCount.value)
         const newId = Date.now()
         currentSessionId.value = newId
         currentSessionTheme.value = prompt
@@ -227,7 +228,7 @@ export function createActionsApi(deps) {
       ? singleColorBase.value
       : currentColors.value
 
-    if (!base || base.length !== 5) {
+    if (!base || base.length < 1 || base.length > 10) {
       notify('当前配色数量异常，无法进行单色微调', 'error')
       return
     }

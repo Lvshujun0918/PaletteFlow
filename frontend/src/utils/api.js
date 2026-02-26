@@ -9,8 +9,8 @@ const apiClient = axios.create({
 })
 
 // 生成配色方案
-export const generatePalette = (prompt) => {
-  return apiClient.post('/generate-palette', { prompt })
+export const generatePalette = (prompt, colorCount = 5) => {
+  return apiClient.post('/generate-palette', { prompt, color_count: colorCount })
 }
 
 // 单色微调：仅替换指定位置的颜色
@@ -19,10 +19,11 @@ export const regenerateSingleColor = (payload) => {
 }
 
 // 微调配色方案
-export const refinePalette = (currentColors, prompt) => {
+export const refinePalette = (currentColors, prompt, colorCount = currentColors.length) => {
   return apiClient.post('/refine-palette', {
     current_colors: currentColors,
-    prompt: prompt
+    prompt: prompt,
+    color_count: colorCount
   })
 }
 
