@@ -11,8 +11,13 @@
             <p>配色，易如反掌</p>
           </div>
           <div class="header-actions">
+            <Tooltip text="新手引导" position="bottom">
+              <button class="header-action-btn" data-tour="guide-btn" @click="startWizard(true)">
+                <IconAlertCircle size="20" />
+              </button>
+            </Tooltip>
             <Tooltip text="设置" position="bottom">
-              <button class="header-action-btn" @click="openSettingsModal">
+              <button class="header-action-btn" data-tour="settings-btn" @click="openSettingsModal">
                 <IconSettings size="20" />
               </button>
             </Tooltip>
@@ -24,7 +29,7 @@
         <!-- 左侧：对话面板 -->
         <div class="panel panel-left glass-panel">
           <div class="chat-container">
-            <div class="chat-header">
+            <div class="chat-header" data-tour="chat-header">
               <div class="chat-header-main">
                 配色对话助手
                 <p v-if="currentSessionTheme" class="session-theme-title">主题：{{ currentSessionTheme }}</p>
@@ -77,7 +82,7 @@
                 <button type="button" class="selected-color-close" title="退出单色微调"
                   @click="clearSingleColorMode">✕</button>
               </div>
-              <textarea v-model="chatInput" class="input-textarea" placeholder="输入你的配色需求..."
+              <textarea v-model="chatInput" class="input-textarea" data-tour="chat-input" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
               <div class="input-footer">
                 <div class="action-row">
@@ -85,13 +90,13 @@
                   <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
                 </div>
-                <div class="color-count-control">
+                <div class="color-count-control" data-tour="color-count">
                   <label for="colorCount" class="color-count-label">颜色数</label>
                   <select id="colorCount" v-model.number="colorCount" class="color-count-select" :disabled="loading">
                     <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
                   </select>
                 </div>
-                <div class="send-actions">
+                <div class="send-actions" data-tour="send-actions">
                   <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
                     @click="handleSendPrompt">
                     <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : '发送' }}
@@ -107,7 +112,7 @@
         </div>
 
         <!-- 右侧：配色显示面板 -->
-        <div class="panel panel-right glass-panel">
+        <div class="panel panel-right glass-panel" data-tour="result-panel">
           <ColorDisplay
             :colors="currentColors"
             :previousColors="previousColors"
@@ -229,6 +234,7 @@
 <script>
 import { ref } from 'vue'
 import { useFeatureLogic } from './featureLogic'
+import { useFeatureWizard } from './feature/wizard'
 import ColorDisplay from '../components/ColorDisplay.vue'
 import Notification from '../components/Notification.vue'
 import GlassButton from '../components/GlassButton.vue'
@@ -264,6 +270,7 @@ export default {
   },
   setup() {
     const featureLogic = useFeatureLogic()
+    const { startWizard, autoStartWizard } = useFeatureWizard()
     const hoveredAdviceColor = ref('')
     const loadingInspiration = ref(false)
     const showRestoreConfirm = ref(false)
@@ -327,6 +334,8 @@ export default {
         loadingInspiration.value = false
       }
     }
+
+    autoStartWizard()
 
     const openSettingsModal = () => {
       projectInfo.value.currentSession = featureLogic.currentSessionTheme?.value || '未命名会话'
@@ -421,6 +430,7 @@ export default {
       loadingInspiration,
       handleAdviceColorHover,
       handleInspirationSend,
+      startWizard,
       showRestoreConfirm,
       openRestoreConfirm,
       cancelRestoreToMessage,
