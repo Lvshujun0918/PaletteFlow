@@ -208,7 +208,7 @@
         </div>
         <template #actions>
           <GlassButton variant="primary" custom-class="full-width" @click="confirmStartNewConversation">
-            <span><IconEdit2 size="18" style="color: white" /></span> 开始新一轮配色
+            <IconEdit2 size="18" style="color: white" />开始新一轮配色
           </GlassButton>
         </template>
       </AppModal>
