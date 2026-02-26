@@ -31,4 +31,9 @@ export const healthCheck = () => {
   return apiClient.get('/health')
 }
 
+// 生成灵感短句
+export const generateInspirationText = () => {
+  return apiClient.get('/generate-inspiration')
+}
+
 export default apiClient

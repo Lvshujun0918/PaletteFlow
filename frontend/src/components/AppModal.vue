@@ -117,6 +117,7 @@ export default {
 }
 
 .modal-body {
+  overflow: auto;
   padding: 12px 16px;
 }
 
