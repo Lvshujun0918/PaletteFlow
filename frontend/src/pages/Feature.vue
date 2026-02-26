@@ -207,7 +207,7 @@
           </div>
         </div>
         <template #actions>
-          <GlassButton data-tour="chat-start" variant="primary" custom-class="full-width" @click="confirmStartNewConversation">
+          <GlassButton data-tour="chat-start" variant="primary" custom-class="full-width" @click="proceedStartNewConversation">
             <IconEdit2 size="18" style="color: white" />开始新一轮配色
           </GlassButton>
         </template>
