@@ -12,6 +12,7 @@ export function createSessionApi(deps) {
     chatInput,
     chatMessages,
     showSessionChoice,
+    suppressSessionChoiceOnce,
     showHistoryPanel,
     savedSessions,
     selectedColor1,
@@ -69,6 +70,7 @@ export function createSessionApi(deps) {
     currentSessionId.value = null
     currentSessionTheme.value = ''
     showSessionChoice.value = false
+    suppressSessionChoiceOnce.value = true
     router.replace('/feature')
     chatMessages.value = [createWelcomeMessage()]
     saveChatMessagesToStorage(true)

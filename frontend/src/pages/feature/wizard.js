@@ -11,11 +11,63 @@ export function useFeatureWizard() {
     }
 
     await nextTick()
-    const wizard = driver({
+    let firstStepCompleted = false
+    let detachFirstStepClick = null
+    let wizard
+
+    const bindFirstStepButton = () => {
+      const startButton = document.querySelector('[data-tour="chat-start"]')
+      if (!startButton) return
+
+      const handleStartClick = () => {
+        if (firstStepCompleted) return
+        firstStepCompleted = true
+        wizard.moveNext()
+      }
+
+      startButton.addEventListener('click', handleStartClick)
+      detachFirstStepClick = () => {
+        startButton.removeEventListener('click', handleStartClick)
+        detachFirstStepClick = null
+      }
+    }
+
+    wizard = driver({
       showProgress: true,
       allowClose: true,
       overlayClickBehavior: 'close',
       steps: [
+        {
+          element: '[data-tour="chat-start"]',
+          onHighlighted: () => {
+            bindFirstStepButton()
+          },
+          onDeselected: () => {
+            if (detachFirstStepClick) detachFirstStepClick()
+          },
+          popover: {
+            title: '让我们开始',
+            description: '这是新建按钮，让我们创建一个新对话来开始配色之旅吧！',
+            side: 'top',
+            align: 'start',
+            nextBtnText: '新建对话',
+            onNextClick: () => {
+              if (firstStepCompleted) {
+                wizard.moveNext()
+                return
+              }
+
+              const startButton = document.querySelector('[data-tour="chat-start"]')
+              if (startButton) {
+                startButton.click()
+                return
+              }
+
+              firstStepCompleted = true
+              wizard.moveNext()
+            }
+          }
+        },
         {
           element: '[data-tour="chat-header"]',
           popover: {
@@ -72,6 +124,7 @@ export function useFeatureWizard() {
         }
       ],
       onDestroyed: () => {
+        if (detachFirstStepClick) detachFirstStepClick()
         localStorage.setItem(WIZARD_STORAGE_KEY, '1')
       }
     })

@@ -28,6 +28,7 @@ export function useFeatureLogic() {
   const chatInput = ref('')
   const chatMessages = ref([createWelcomeMessage()])
   const showSessionChoice = ref(false)
+  const suppressSessionChoiceOnce = ref(false)
   const showNewConversationConfirm = ref(false)
   const showHistoryPanel = ref(false)
   const savedSessions = ref([])
@@ -88,6 +89,7 @@ export function useFeatureLogic() {
     chatInput,
     chatMessages,
     showSessionChoice,
+    suppressSessionChoiceOnce,
     showHistoryPanel,
     savedSessions,
     selectedColor1,
@@ -146,10 +148,28 @@ export function useFeatureLogic() {
   watch(
     () => route.params.sessionId,
     (sessionId) => {
-      if (!sessionId) return
-      const applied = sessionApi.loadSessionById(sessionId, { updateRoute: false, notifyUser: false })
-      if (applied) {
-        showHistoryPanel.value = false
+      if (sessionId) {
+        const applied = sessionApi.loadSessionById(sessionId, { updateRoute: false, notifyUser: false })
+        if (applied) {
+          showHistoryPanel.value = false
+          showSessionChoice.value = false
+        }
+        return
+      }
+
+      if (suppressSessionChoiceOnce.value) {
+        suppressSessionChoiceOnce.value = false
+        return
+      }
+
+      if (savedSessions.value.length > 0) {
+        showSessionChoice.value = true
+        return
+      }
+
+      const storedChat = storageApi.getStoredChatMessages()
+      if (storedChat.length > 1) {
+        showSessionChoice.value = true
       }
     }
   )
@@ -253,12 +273,16 @@ export function useFeatureLogic() {
         router.replace('/feature')
       }
     } else {
-      storageApi.loadHistoriesFromStorage()
-      const storedChat = storageApi.getStoredChatMessages()
-      if (storedChat.length > 1) {
+      if (savedSessions.value.length > 0) {
         showSessionChoice.value = true
       } else {
-        sessionApi.startNewConversation()
+        storageApi.loadHistoriesFromStorage()
+        const storedChat = storageApi.getStoredChatMessages()
+        if (storedChat.length > 1) {
+          showSessionChoice.value = true
+        } else {
+          sessionApi.startNewConversation()
+        }
       }
     }
 
