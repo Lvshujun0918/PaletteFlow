@@ -72,10 +72,15 @@ export function useFeatureWizard() {
     const waitForSendCompletion = (timeoutMs = 25000) => {
       const startedAt = Date.now()
       let sawLoading = false
+      let sawInputConsumed = false
+      const inputEl = document.querySelector('[data-tour="chat-input"]')
+      const initialValue = inputEl ? (inputEl.value || '') : ''
 
       return new Promise((resolve) => {
         const check = () => {
           const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+          const currentInputEl = document.querySelector('[data-tour="chat-input"]')
+          const currentValue = currentInputEl ? (currentInputEl.value || '') : ''
           if (!sendBtn) {
             if (Date.now() - startedAt > timeoutMs) {
               resolve(false)
@@ -90,7 +95,17 @@ export function useFeatureWizard() {
             sawLoading = true
           }
 
+          if (!sawInputConsumed && initialValue && currentValue !== initialValue) {
+            sawInputConsumed = true
+          }
+
           if (sawLoading && !isLoading) {
+            resolve(true)
+            return
+          }
+
+          // 兼容“秒回”场景：请求很快完成，可能来不及观察到 loading
+          if (!sawLoading && sawInputConsumed && !isLoading && Date.now() - startedAt > 300) {
             resolve(true)
             return
           }
@@ -228,8 +243,17 @@ export function useFeatureWizard() {
           element: '[data-tour="result-panel"]',
           popover: {
             title: '查看结果',
-            description: '右侧显示配色结果与建议，可复制、微调、检查可访问性。',
+            description: '右侧显示配色结果与建议，使用建议中的对应颜色点击可高亮显示。',
             side: 'left',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="color-actions"]',
+          popover: {
+            title: '调整与复制',
+            description: '此处可使用AI或手动调整颜色，点击复制按钮可复制颜色代码。',
+            side: 'bottom',
             align: 'start'
           }
         },

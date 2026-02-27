@@ -15,7 +15,7 @@
         <div class="color-preview" :style="{ backgroundColor: color }"></div>
         <div class="color-info">
           <div class="color-code">{{ color }}</div>
-          <div class="color-actions">
+          <div class="color-actions" data-tour="color-actions">
             <Tooltip text="复制颜色值" position="top">
               <button class="copy-btn" @click.stop="copyToClipboard(color)"><IconCopy size="18" /></button>
             </Tooltip>
