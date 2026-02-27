@@ -61,6 +61,23 @@ func GeneratePaletteHandler(c *gin.Context) {
 		return
 	}
 
+	normalizedPrompt := strings.TrimSpace(req.Prompt)
+	if normalizedPrompt == "森林配色" {
+		log.Printf("[INFO] Demo prompt hit, return preset palette directly: %s\n", req.Prompt)
+		forestColors := []string{
+			"#2D5016", "#4A7C59", "#8F9779", "#C8D5B9", "#F8F6F0",
+			"#1F3B1A", "#5F8F6F", "#A7B89A", "#DCE6D1", "#EEF3E8",
+		}
+		response := ColorPaletteResponse{
+			Colors:      forestColors[:colorCount],
+			Advice:      "主色#2D5016用于标题或重点元素，次色#4A7C59和#8F9779用于正文与背景过渡，点缀色#C8D5B9用于按钮或图标，#F8F6F0作为底色提升可读性。适用于自然主题网站、环保品牌视觉或户外产品包装。",
+			Timestamp:   time.Now().Unix(),
+			Description: "森林主题演示配色（直返）",
+		}
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
 	if strings.Contains(req.Prompt, "烧鸡") {
 		log.Printf("[INFO] Bingo~ %s\n", req.Prompt)
 		colors := []string{"#000000", "#FFFFFF", "#1E3A5F", "#2D5B8A", "#E5E5E5", "#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6"}
