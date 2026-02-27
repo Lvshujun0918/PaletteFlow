@@ -28,7 +28,7 @@
           </div>
         </div>
         <!-- 对比差值显示 -->
-        <div v-if="showComparison && previousColors.length > index && hasColorChanged(color, previousColors[index])" class="color-diff">
+        <div v-if="showComparison && previousColors.length > index && hasColorChanged(color, previousColors[index])" class="color-diff" data-tour="color-diff">
           <div class="comparison-colors">
             <div class="prev-color-block" :style="{ backgroundColor: previousColors[index] }" :title="previousColors[index]"></div>
             <span class="arrow">→</span>

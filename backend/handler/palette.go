@@ -22,7 +22,7 @@ type ColorPaletteRequest struct {
 type SingleColorRequest struct {
 	Prompt      string   `json:"prompt" binding:"required"`
 	BaseColors  []string `json:"base_colors" binding:"required"`
-	TargetIndex int      `json:"target_index" binding:"required"`
+	TargetIndex int      `json:"target_index"`
 }
 
 type ColorPaletteResponse struct {
@@ -139,6 +139,24 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 		}
 		normalized = append(normalized, candidate)
 	}
+
+	normalizedPrompt := strings.TrimSpace(req.Prompt)
+	if normalizedPrompt == "改成蓝色" {
+		log.Printf("[INFO] Demo single-color prompt hit, return preset replacement directly: %s\n", req.Prompt)
+		resultColors := make([]string, len(normalized))
+		copy(resultColors, normalized)
+		resultColors[req.TargetIndex] = "#2563EB"
+
+		response := ColorPaletteResponse{
+			Colors:      resultColors,
+			Advice:      "已将目标颜色替换为蓝色 #2563EB，并保持其余颜色不变。建议在标题、链接或按钮处使用该蓝色作为视觉锚点。",
+			Timestamp:   time.Now().Unix(),
+			Description: fmt.Sprintf("针对第%d个颜色的定向微调（演示直返）", req.TargetIndex+1),
+		}
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
 	log.Printf("[INFO] Using %s to replace single color:\n", req.Prompt)
 	result, err := ai.GeneratePaletteWithSingleColor(normalized, req.TargetIndex, req.Prompt)
 	if err != nil {

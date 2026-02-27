@@ -44,6 +44,13 @@ export function useFeatureWizard() {
       inputEl.dispatchEvent(new Event('change', { bubbles: true }))
     }
 
+    const selectFirstColorForAI = () => {
+      const firstAiBtn = document.querySelector('[data-tour="color-actions"] .pick-btn')
+      if (!firstAiBtn) return false
+      firstAiBtn.click()
+      return true
+    }
+
     const bindSendStepButton = () => {
       const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
       if (!sendBtn) return
@@ -254,6 +261,94 @@ export function useFeatureWizard() {
             title: '调整与复制',
             description: '此处可使用AI或手动调整颜色，点击复制按钮可复制颜色代码。',
             side: 'bottom',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="color-actions"]',
+          popover: {
+            title: '体验AI单色调整',
+            description: '现在自动选中第一种颜色进入AI单色调整模式。',
+            side: 'bottom',
+            align: 'start',
+            nextBtnText: '选中第一个颜色',
+            onNextClick: () => {
+              selectFirstColorForAI()
+              setTimeout(() => {
+                wizard.moveNext()
+              }, 120)
+            }
+          }
+        },
+        {
+          element: '[data-tour="chat-input"]',
+          popover: {
+            title: '输入单色调整需求',
+            description: '向输入框自动填入“改成蓝色”，并提交演示请求。',
+            side: 'top',
+            align: 'start',
+            nextBtnText: '填入改成蓝色',
+            onNextClick: () => {
+              fillPresetPrompt('改成蓝色')
+              wizard.moveNext()
+            }
+          }
+        },
+        {
+          element: '[data-tour="send-actions"]',
+          onHighlighted: () => {
+            bindSendStepButton()
+          },
+          onDeselected: () => {
+            if (detachSendStepClick) detachSendStepClick()
+          },
+          popover: {
+            title: '提交单色调整',
+            description: '点击后会调用后端演示直返结果，并在完成后自动进入下一步。',
+            side: 'top',
+            align: 'start',
+            nextBtnText: '发送并继续',
+            onNextClick: () => {
+              if (sendStepCompleted) {
+                wizard.moveNext()
+                return
+              }
+
+              if (sendStepWaiting) {
+                return
+              }
+
+              const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+              if (sendBtn) {
+                sendBtn.click()
+                return
+              }
+
+              sendStepWaiting = true
+              waitForSendCompletion().then((completed) => {
+                sendStepWaiting = false
+                if (!completed || sendStepCompleted) return
+                sendStepCompleted = true
+                wizard.moveNext()
+              })
+            }
+          }
+        },
+        {
+          element: '[data-tour="result-panel"]',
+          popover: {
+            title: '查看单色调整结果',
+            description: '已完成AI单色调整演示，你可以继续手动编辑或再次发起微调。',
+            side: 'left',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="color-diff"]',
+          popover: {
+            title: '显示详细颜色差异',
+            description: '通过HSL显示颜色差异，可方便地查看颜色前后变化。',
+            side: 'left',
             align: 'start'
           }
         },
