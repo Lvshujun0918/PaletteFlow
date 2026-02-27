@@ -14,6 +14,7 @@ export function useFeatureWizard() {
     let firstStepCompleted = false
     let detachFirstStepClick = null
     let sendStepCompleted = false
+    let sendStepWaiting = false
     let detachSendStepClick = null
     let wizard
 
@@ -48,8 +49,15 @@ export function useFeatureWizard() {
       if (!sendBtn) return
 
       sendStepCompleted = false
-      const handleSendClick = () => {
-        if (sendStepCompleted) return
+      sendStepWaiting = false
+      const handleSendClick = async () => {
+        if (sendStepCompleted || sendStepWaiting) return
+        sendStepWaiting = true
+
+        const completed = await waitForSendCompletion()
+        sendStepWaiting = false
+        if (!completed || sendStepCompleted) return
+
         sendStepCompleted = true
         wizard.moveNext()
       }
@@ -59,6 +67,44 @@ export function useFeatureWizard() {
         sendBtn.removeEventListener('click', handleSendClick)
         detachSendStepClick = null
       }
+    }
+
+    const waitForSendCompletion = (timeoutMs = 25000) => {
+      const startedAt = Date.now()
+      let sawLoading = false
+
+      return new Promise((resolve) => {
+        const check = () => {
+          const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+          if (!sendBtn) {
+            if (Date.now() - startedAt > timeoutMs) {
+              resolve(false)
+              return
+            }
+            setTimeout(check, 120)
+            return
+          }
+
+          const isLoading = sendBtn.classList.contains('is-loading') || !!sendBtn.querySelector('.glass-button__spinner')
+          if (isLoading) {
+            sawLoading = true
+          }
+
+          if (sawLoading && !isLoading) {
+            resolve(true)
+            return
+          }
+
+          if (Date.now() - startedAt > timeoutMs) {
+            resolve(false)
+            return
+          }
+
+          setTimeout(check, 120)
+        }
+
+        check()
+      })
     }
 
     wizard = driver({
@@ -158,14 +204,23 @@ export function useFeatureWizard() {
                 return
               }
 
+              if (sendStepWaiting) {
+                return
+              }
+
               const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
               if (sendBtn) {
                 sendBtn.click()
                 return
               }
 
-              sendStepCompleted = true
-              wizard.moveNext()
+              sendStepWaiting = true
+              waitForSendCompletion().then((completed) => {
+                sendStepWaiting = false
+                if (!completed || sendStepCompleted) return
+                sendStepCompleted = true
+                wizard.moveNext()
+              })
             }
           }
         },
