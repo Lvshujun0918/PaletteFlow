@@ -85,7 +85,7 @@
               <textarea v-model="chatInput" class="input-textarea" data-tour="chat-input" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
               <div class="input-footer">
-                <div class="action-row">
+                <div class="action-row" data-tour="action-row">
                   <GlassButton variant="chip" @click="insertQuickInput('不满意，重新生成')">重新生成</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>

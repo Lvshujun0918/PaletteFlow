@@ -72,7 +72,7 @@ export function useFeatureWizard() {
           element: '[data-tour="chat-header"]',
           popover: {
             title: '配色对话助手',
-            description: '这里是主工作区，可新建对话与查看历史会话。',
+            description: '这里是主工作区，点击右侧按钮可以新建对话与查看历史会话。',
             side: 'bottom',
             align: 'start'
           }
@@ -81,7 +81,7 @@ export function useFeatureWizard() {
           element: '[data-tour="chat-input"]',
           popover: {
             title: '输入你的需求',
-            description: '输入场景、风格或情绪描述，按 Ctrl+Enter 或点击发送。',
+            description: '输入场景、风格或情绪描述，按 Ctrl+Enter 或点击发送。第一次发送会生成配色方案，之后可以微调颜色或数量。',
             side: 'top',
             align: 'start'
           }
@@ -91,6 +91,15 @@ export function useFeatureWizard() {
           popover: {
             title: '选择颜色数量',
             description: '支持 1 到 10 色，可先生成再精细调整。',
+            side: 'top',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="action-row"]',
+          popover: {
+            title: '快捷短语',
+            description: '支持查看颜色的色盲适配情况和对比度，支持重新生成配色方案。',
             side: 'top',
             align: 'start'
           }
