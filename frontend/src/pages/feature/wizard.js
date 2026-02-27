@@ -4,9 +4,13 @@ import 'driver.js/dist/driver.css'
 
 const WIZARD_STORAGE_KEY = 'paletteflow_wizard_completed_v1'
 
+export function isFeatureWizardCompleted() {
+  return localStorage.getItem(WIZARD_STORAGE_KEY) === '1'
+}
+
 export function useFeatureWizard() {
   const startWizard = async (force = false) => {
-    if (!force && localStorage.getItem(WIZARD_STORAGE_KEY) === '1') {
+    if (!force && isFeatureWizardCompleted()) {
       return
     }
 
