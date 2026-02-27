@@ -72,7 +72,7 @@ func GeneratePaletteHandler(c *gin.Context) {
 			Colors:      forestColors[:colorCount],
 			Advice:      "主色#2D5016用于标题或重点元素，次色#4A7C59和#8F9779用于正文与背景过渡，点缀色#C8D5B9用于按钮或图标，#F8F6F0作为底色提升可读性。适用于自然主题网站、环保品牌视觉或户外产品包装。",
 			Timestamp:   time.Now().Unix(),
-			Description: "森林主题演示配色（直返）",
+			Description: "森林主题演示配色",
 		}
 		c.JSON(http.StatusOK, response)
 		return
