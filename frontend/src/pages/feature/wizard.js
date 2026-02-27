@@ -13,6 +13,8 @@ export function useFeatureWizard() {
     await nextTick()
     let firstStepCompleted = false
     let detachFirstStepClick = null
+    let sendStepCompleted = false
+    let detachSendStepClick = null
     let wizard
 
     const bindFirstStepButton = () => {
@@ -29,6 +31,33 @@ export function useFeatureWizard() {
       detachFirstStepClick = () => {
         startButton.removeEventListener('click', handleStartClick)
         detachFirstStepClick = null
+      }
+    }
+
+    const fillPresetPrompt = (text) => {
+      const inputEl = document.querySelector('[data-tour="chat-input"]')
+      if (!inputEl) return
+      inputEl.focus()
+      inputEl.value = text
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }))
+      inputEl.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    const bindSendStepButton = () => {
+      const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+      if (!sendBtn) return
+
+      sendStepCompleted = false
+      const handleSendClick = () => {
+        if (sendStepCompleted) return
+        sendStepCompleted = true
+        wizard.moveNext()
+      }
+
+      sendBtn.addEventListener('click', handleSendClick)
+      detachSendStepClick = () => {
+        sendBtn.removeEventListener('click', handleSendClick)
+        detachSendStepClick = null
       }
     }
 
@@ -83,7 +112,12 @@ export function useFeatureWizard() {
             title: '输入你的需求',
             description: '输入场景、风格或情绪描述，按 Ctrl+Enter 或点击发送。第一次发送会生成配色方案，之后可以微调颜色或数量。',
             side: 'top',
-            align: 'start'
+            align: 'start',
+            nextBtnText: '填入示例词',
+            onNextClick: () => {
+              fillPresetPrompt('森林配色')
+              wizard.moveNext()
+            }
           }
         },
         {
@@ -106,11 +140,33 @@ export function useFeatureWizard() {
         },
         {
           element: '[data-tour="send-actions"]',
+          onHighlighted: () => {
+            bindSendStepButton()
+          },
+          onDeselected: () => {
+            if (detachSendStepClick) detachSendStepClick()
+          },
           popover: {
             title: '发送与灵感',
             description: '发送会生成/微调配色；灵感按钮会自动生成艺术短句并发送。',
             side: 'top',
-            align: 'start'
+            align: 'start',
+            nextBtnText: '发送并继续',
+            onNextClick: () => {
+              if (sendStepCompleted) {
+                wizard.moveNext()
+                return
+              }
+
+              const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+              if (sendBtn) {
+                sendBtn.click()
+                return
+              }
+
+              sendStepCompleted = true
+              wizard.moveNext()
+            }
           }
         },
         {
@@ -134,6 +190,7 @@ export function useFeatureWizard() {
       ],
       onDestroyed: () => {
         if (detachFirstStepClick) detachFirstStepClick()
+        if (detachSendStepClick) detachSendStepClick()
         localStorage.setItem(WIZARD_STORAGE_KEY, '1')
       }
     })
