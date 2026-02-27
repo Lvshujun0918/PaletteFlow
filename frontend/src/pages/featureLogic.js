@@ -147,7 +147,18 @@ export function useFeatureLogic() {
 
   watch(
     () => route.params.sessionId,
-    (sessionId) => {
+    (sessionId, prevSessionId) => {
+      if (prevSessionId && !sessionId) {
+        try {
+          if (currentSessionId.value && chatMessages.value.length > 1) {
+            storageApi.saveCurrentSession()
+            storageApi.persistSessions()
+          }
+        } catch (error) {
+          console.error('路由切换到 /feature 时保存当前会话失败:', error)
+        }
+      }
+
       if (sessionId) {
         const applied = sessionApi.loadSessionById(sessionId, { updateRoute: false, notifyUser: false })
         if (applied) {
