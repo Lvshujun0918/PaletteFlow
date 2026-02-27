@@ -69,7 +69,7 @@ import bg2 from './assets/bg2.png'
 import bg3 from './assets/bg3.png'
 import bg4 from './assets/bg4.png'
 import bg5 from './assets/bg5.png'
-import logo from './assets/logo.png'
+import logo from './assets/logo0.png'
 import GlassButton from './components/GlassButton.vue'
 
 export default {
