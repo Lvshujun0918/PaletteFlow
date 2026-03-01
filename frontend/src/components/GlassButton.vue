@@ -65,7 +65,6 @@ export default {
 
 .glass-button--cta:hover:not(:disabled) {
   background: var(--glass-cta-hover);
-  transform: translateY(-1px);
 }
 
 .glass-button--primary {
@@ -77,7 +76,6 @@ export default {
 
 .glass-button--primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #5568d3 0%, #6a3f91 100%);
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
 }
 
@@ -91,7 +89,6 @@ export default {
 .glass-button--secondary:hover:not(:disabled) {
   background: #cbd5e1;
   color: #334155;
-  transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
@@ -105,7 +102,6 @@ export default {
 
 .glass-button--ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.4);
-  transform: translateY(-1px);
 }
 
 .glass-button--chip {
@@ -123,7 +119,6 @@ export default {
   background: rgba(255, 255, 255, 0.6);
   color: #1e293b;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px);
 }
 
 .glass-button:disabled {
