@@ -84,9 +84,9 @@
 
     <!-- 快速操作 -->
     <div class="quick-actions">
-      <GlassButton class="action-btn" @click="exportAsCSS">导出CSS</GlassButton>
-      <GlassButton class="action-btn" @click="exportAsJSON">导出JSON</GlassButton>
-      <GlassButton class="action-btn" @click="exportAsImage">导出图片</GlassButton>
+      <GlassButton class="action-btn" variant="chip" @click="exportAsCSS">导出CSS</GlassButton>
+      <GlassButton class="action-btn" variant="chip" @click="exportAsJSON">导出JSON</GlassButton>
+      <GlassButton class="action-btn" variant="chip" @click="exportAsImage">导出图片</GlassButton>
     </div>
   </div>
 </template>

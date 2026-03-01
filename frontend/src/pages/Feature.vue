@@ -92,26 +92,31 @@
                 </div>
                 <div class="send-actions" data-tour="send-actions">
                   <div class="send-count-control" data-tour="color-count">
-                    <button
-                      type="button"
-                      class="count-adjust-btn left"
-                      :disabled="loading || colorCount <= 1"
-                      @click="adjustColorCount(-1)"
+                    <GlassButton
+                      variant="primary"
+                      class="send-btn send-count-unified"
+                      :loading="loading"
+                      :disabled="loading"
+                      @click="handleSendPrompt"
                     >
-                      -
-                    </button>
-                    <GlassButton variant="primary" class="send-btn" :loading="loading" :disabled="chatInput.trim() === '' || loading"
-                      @click="handleSendPrompt">
-                      <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
+                      <span
+                        class="send-count-segment side"
+                        :class="{ disabled: loading || colorCount <= 1 }"
+                        @click.stop="adjustColorCount(-1)"
+                      >
+                        <IconMinus size="16" />
+                      </span>
+                      <span class="send-count-segment main">
+                        <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
+                      </span>
+                      <span
+                        class="send-count-segment side"
+                        :class="{ disabled: loading || colorCount >= 10 }"
+                        @click.stop="adjustColorCount(1)"
+                      >
+                        <IconPlus size="16" />
+                      </span>
                     </GlassButton>
-                    <button
-                      type="button"
-                      class="count-adjust-btn right"
-                      :disabled="loading || colorCount >= 10"
-                      @click="adjustColorCount(1)"
-                    >
-                      +
-                    </button>
                   </div>
                   <GlassButton class="inspiration-btn" :loading="loadingInspiration"
                     :disabled="loading || loadingInspiration" @click="handleInspirationSend">
@@ -1000,12 +1005,7 @@ export default {
 }
 
 .send-btn {
-  padding: 0 20px;
-  font-size: 0.95rem;
-  min-height: 45px;
-  border-radius: 999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+  min-width: 156px;
 }
 
 .send-actions {
@@ -1015,66 +1015,45 @@ export default {
 }
 
 .send-count-control {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  min-height: 45px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  box-shadow: var(--glass-outline), var(--glass-inner), 0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+.send-count-unified {
+  padding: 0 !important;
+  min-height: 46px;
+  border-radius: 999px !important;
   overflow: hidden;
 }
 
-.send-count-control::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08));
-  pointer-events: none;
+.send-count-segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  gap: 2px;
 }
 
-.send-count-control > * {
-  position: relative;
-  z-index: 1;
+.send-count-segment.side {
+  width: 35px;
+  min-width: 35px;
+  font-size: 1.15rem;
+  text-align: center;
+  user-select: none;
 }
 
-.count-adjust-btn {
-  width: 38px;
-  height: 38px;
-  border: none;
-  background: rgba(255, 255, 255, 0.26);
-  color: rgba(30, 41, 59, 0.92);
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+.send-count-segment.side :deep(svg) {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
 }
 
-.count-adjust-btn.left {
-  border-top-left-radius: 999px;
-  border-bottom-left-radius: 999px;
-  border-right: 1px solid rgba(255, 255, 255, 0.36);
+.send-count-segment.side:not(.disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.count-adjust-btn.right {
-  border-top-right-radius: 999px;
-  border-bottom-right-radius: 999px;
-  border-left: 1px solid rgba(255, 255, 255, 0.36);
-}
-
-.count-adjust-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.42);
-  color: rgba(15, 23, 42, 0.95);
-}
-
-.count-adjust-btn:disabled {
-  opacity: 0.45;
+.send-count-segment.side.disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

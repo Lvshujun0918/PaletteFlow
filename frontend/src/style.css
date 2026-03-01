@@ -35,6 +35,10 @@ body {
   --glass-cta-shadow: 0 14px 30px rgba(37, 99, 235, 0.3);
 }
 
+.lucide {
+  stroke-width: 2.5;
+}
+
 .glass-surface {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);

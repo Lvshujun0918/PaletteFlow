@@ -7,6 +7,7 @@ import './style.css'
 import {
   Settings,
   Plus,
+  Minus,
   History,
   Copy,
   Edit2,
@@ -27,6 +28,7 @@ const app = createApp(App)
 const icons = {
   Settings,
   Plus,
+  Minus,
   History,
   Copy,
   Edit2,
