@@ -90,18 +90,30 @@
                   <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
                 </div>
-                <div class="color-count-control" data-tour="color-count">
-                  <label for="colorCount" class="color-count-label">颜色数</label>
-                  <select id="colorCount" v-model.number="colorCount" class="color-count-select" :disabled="loading">
-                    <option v-for="n in 10" :key="n" :value="n">{{ n }}</option>
-                  </select>
-                </div>
                 <div class="send-actions" data-tour="send-actions">
-                  <GlassButton class="send-btn" :loading="loading" :disabled="chatInput.trim() === ''"
-                    @click="handleSendPrompt">
-                    <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : '发送' }}
-                  </GlassButton>
-                  <GlassButton class="inspiration-btn" variant="secondary" :loading="loadingInspiration"
+                  <div class="send-count-control" data-tour="color-count">
+                    <button
+                      type="button"
+                      class="count-adjust-btn left"
+                      :disabled="loading || colorCount <= 1"
+                      @click="adjustColorCount(-1)"
+                    >
+                      -
+                    </button>
+                    <GlassButton variant="primary" class="send-btn" :loading="loading" :disabled="chatInput.trim() === '' || loading"
+                      @click="handleSendPrompt">
+                      <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
+                    </GlassButton>
+                    <button
+                      type="button"
+                      class="count-adjust-btn right"
+                      :disabled="loading || colorCount >= 10"
+                      @click="adjustColorCount(1)"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <GlassButton class="inspiration-btn" :loading="loadingInspiration"
                     :disabled="loading || loadingInspiration" @click="handleInspirationSend">
                     <IconSparkles v-if="!loadingInspiration" size="18" />灵感
                   </GlassButton>
@@ -295,6 +307,12 @@ export default {
       hoveredAdviceColor.value = color || ''
     }
 
+    const adjustColorCount = (delta) => {
+      const current = Number(featureLogic.colorCount.value) || 1
+      const next = Math.max(1, Math.min(10, current + delta))
+      featureLogic.colorCount.value = next
+    }
+
     const openRestoreConfirm = (index) => {
       pendingRestoreIndex.value = index
       showRestoreConfirm.value = true
@@ -430,6 +448,7 @@ export default {
       loadingInspiration,
       handleAdviceColorHover,
       handleInspirationSend,
+      adjustColorCount,
       startWizard,
       showRestoreConfirm,
       openRestoreConfirm,
@@ -928,9 +947,12 @@ export default {
 }
 
 .send-btn {
-  padding: 12px 22px;
+  padding: 0 20px;
   font-size: 0.95rem;
-  min-height: 42px;
+  min-height: 38px;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
 }
 
 .send-actions {
@@ -939,25 +961,69 @@ export default {
   gap: 8px;
 }
 
-.color-count-control {
+.send-count-control {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
+  min-height: 46px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-outline), var(--glass-inner), 0 10px 24px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
 }
 
-.color-count-label {
-  font-size: 0.85rem;
-  color: #64748b;
+.send-count-control::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08));
+  pointer-events: none;
 }
 
-.color-count-select {
-  min-width: 72px;
+.send-count-control > * {
+  position: relative;
+  z-index: 1;
+}
+
+.count-adjust-btn {
+  width: 38px;
   height: 38px;
-  padding: 0 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(255, 255, 255, 0.85);
-  color: #1f2937;
+  border: none;
+  background: rgba(255, 255, 255, 0.26);
+  color: rgba(30, 41, 59, 0.92);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.count-adjust-btn.left {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+  border-right: 1px solid rgba(255, 255, 255, 0.36);
+}
+
+.count-adjust-btn.right {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+  border-left: 1px solid rgba(255, 255, 255, 0.36);
+}
+
+.count-adjust-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.42);
+  color: rgba(15, 23, 42, 0.95);
+}
+
+.count-adjust-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .inspiration-btn {
