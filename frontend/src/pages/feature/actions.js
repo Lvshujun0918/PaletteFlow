@@ -1,4 +1,5 @@
 import { regenerateSingleColor, refinePalette, generatePalette } from '../../utils/api'
+import { nextTick } from 'vue'
 import {
   getContrastRatio,
   getContrastLevel,
@@ -46,6 +47,16 @@ export function createActionsApi(deps) {
     clearSingleColorMode
   } = deps
 
+  const scrollChatToLatest = async (smooth = true) => {
+    await nextTick()
+    const chatList = document.querySelector('.chat-messages')
+    if (!chatList) return
+    chatList.scrollTo({
+      top: chatList.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto'
+    })
+  }
+
   const addChatMessage = (role, type, content, payload = null) => {
     chatMessages.value.push({
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -59,6 +70,7 @@ export function createActionsApi(deps) {
       chatMessages.value.splice(0, chatMessages.value.length - MAX_CHAT_HISTORY)
     }
     saveChatMessagesToStorage()
+    scrollChatToLatest(true)
   }
 
   const handlePickColorFromChat = (palette, index) => {
@@ -94,6 +106,7 @@ export function createActionsApi(deps) {
       
       saveChatMessagesToStorage()
       persistSessions()
+      scrollChatToLatest(true)
     }
     showColorPicker.value = false
   }
@@ -444,7 +457,23 @@ export function createActionsApi(deps) {
       return
     }
 
+    if (prompt.includes('不满意')) {
+      handleRegenerate()
+      return
+    }
     addChatMessage('user', 'text', prompt)
+    if (prompt.includes('查看历史')) {
+      handleShowHistory()
+      return
+    }
+    if (prompt.includes('对比度检查')) {
+      handleContrastCheck()
+      return
+    }
+    if (prompt.includes('色盲检查')) {
+      handleColorblindCheck()
+      return
+    }
     handleGenerate(prompt)
   }
 
