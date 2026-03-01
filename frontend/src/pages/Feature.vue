@@ -85,10 +85,10 @@
               <textarea v-model="chatInput" class="input-textarea" data-tour="chat-input" placeholder="输入你的配色需求..."
                 @keydown.ctrl.enter="handleSendPrompt"></textarea>
               <div class="input-footer">
-                <div class="action-row" data-tour="action-row">
-                  <GlassButton variant="chip" @click="insertQuickInput('不满意，重新生成')">重新生成</GlassButton>
-                  <GlassButton variant="chip" @click="insertQuickInput('对比度检查')">对比度检查</GlassButton>
-                  <GlassButton variant="chip" @click="insertQuickInput('色盲检查')">色盲检查</GlassButton>
+                <div class="action-row action-toolbar" data-tour="action-row">
+                  <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('不满意，重新生成')">重新生成</GlassButton>
+                  <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('对比度检查')">对比度检查</GlassButton>
+                  <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('色盲检查')">色盲检查</GlassButton>
                 </div>
                 <div class="send-actions" data-tour="send-actions">
                   <div class="send-count-control" data-tour="color-count">
@@ -939,11 +939,64 @@ export default {
   min-height: 160px;
   padding: 14px 16px;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(15, 23, 42, 0.04);
   resize: none;
   font-size: 1rem;
   line-height: 1.6;
+  font-family: 'SF Mono', 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  color: #1f2937;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.chat-input .input-textarea:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.55);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.chat-input .input-textarea::placeholder {
+  color: rgba(71, 85, 105, 0.78);
+}
+
+.action-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+.action-toolbar :deep(.tool-chip-btn) {
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.action-toolbar :deep(.tool-chip-btn:hover:not(:disabled)) {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+  color: #1e293b;
+}
+
+.action-toolbar :deep(.tool-chip-btn:active:not(:disabled)) {
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .send-btn {

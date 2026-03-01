@@ -435,26 +435,20 @@ export function createActionsApi(deps) {
     notify('已还原到该配色节点', 'success')
   }
 
-  const handleSendPrompt = () => {
-    const prompt = chatInput.value.trim()
-    if (!prompt) return
-
+  const processPrompt = (prompt) => {
     if (singleColorMode.value && singleColorHex.value) {
       addChatMessage('user', 'text', prompt)
       singleColorPrompt.value = prompt
-      chatInput.value = ''
       loading.value = true
       handleSingleColorRegenerate()
       return
     }
 
     if (prompt.includes('不满意')) {
-      chatInput.value = ''
       handleRegenerate()
       return
     }
     addChatMessage('user', 'text', prompt)
-    chatInput.value = ''
 
     if (prompt.includes('查看历史')) {
       handleShowHistory()
@@ -471,6 +465,19 @@ export function createActionsApi(deps) {
     handleGenerate(prompt)
   }
 
+  const handleSendPrompt = () => {
+    const prompt = chatInput.value.trim()
+    if (!prompt) return
+    chatInput.value = ''
+    processPrompt(prompt)
+  }
+
+  const sendQuickPrompt = (text) => {
+    const prompt = typeof text === 'string' ? text.trim() : ''
+    if (!prompt) return
+    processPrompt(prompt)
+  }
+
   return {
     addChatMessage,
     handlePickColorFromChat,
@@ -481,6 +488,7 @@ export function createActionsApi(deps) {
     handleRegenerate,
     handleSingleColorRegenerate,
     insertQuickInput,
+    sendQuickPrompt,
     toggleQuickActions,
     handleSendPrompt,
     handleShowHistory,

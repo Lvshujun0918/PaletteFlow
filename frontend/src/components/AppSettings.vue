@@ -308,7 +308,8 @@ export default {
 }
 
 .settings-panel {
-  max-width: 600px;
+  max-width: 100%;
+  overflow-y: auto;
 }
 
 .settings-panel-title {
