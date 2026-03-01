@@ -444,24 +444,7 @@ export function createActionsApi(deps) {
       return
     }
 
-    if (prompt.includes('不满意')) {
-      handleRegenerate()
-      return
-    }
     addChatMessage('user', 'text', prompt)
-
-    if (prompt.includes('查看历史')) {
-      handleShowHistory()
-      return
-    }
-    if (prompt.includes('对比度检查')) {
-      handleContrastCheck()
-      return
-    }
-    if (prompt.includes('色盲检查')) {
-      handleColorblindCheck()
-      return
-    }
     handleGenerate(prompt)
   }
 
