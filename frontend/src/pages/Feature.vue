@@ -853,7 +853,7 @@ export default {
   padding: 10px 14px;
   font-size: 0.88rem;
   border-radius: 999px;
-  min-height: 38px;
+  min-height: 46px;
 }
 
 .selector-group {
@@ -949,7 +949,7 @@ export default {
 .send-btn {
   padding: 0 20px;
   font-size: 0.95rem;
-  min-height: 38px;
+  min-height: 45px;
   border-radius: 999px !important;
   border: 1px solid rgba(255, 255, 255, 0.35) !important;
   box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
@@ -966,8 +966,7 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 0;
-  min-height: 46px;
-  padding: 3px;
+  min-height: 45px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg-strong);
@@ -1028,7 +1027,71 @@ export default {
 
 .inspiration-btn {
   min-height: 42px;
-  padding: 12px 16px;
+  padding: 12px 18px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  color: #ffffff !important;
+  background:
+    radial-gradient(130% 120% at 0% 100%, rgba(34, 211, 238, 0.9) 0%, rgba(34, 211, 238, 0) 55%),
+    radial-gradient(140% 130% at 100% 0%, rgba(236, 72, 153, 0.9) 0%, rgba(236, 72, 153, 0) 55%),
+    linear-gradient(125deg, rgba(99, 102, 241, 0.9), rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9)) !important;
+  backdrop-filter: blur(14px) saturate(175%);
+  -webkit-backdrop-filter: blur(14px) saturate(175%);
+  box-shadow:
+    0 10px 22px rgba(79, 70, 229, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+
+.inspiration-btn::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 999px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.08));
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.inspiration-btn::after {
+  content: '';
+  position: absolute;
+  top: -35%;
+  left: -30%;
+  width: 70%;
+  height: 170%;
+  transform: rotate(20deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.inspiration-btn:hover:not(:disabled) {
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    0 14px 28px rgba(79, 70, 229, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+.inspiration-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow:
+    0 8px 18px rgba(79, 70, 229, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+.inspiration-btn:disabled {
+  opacity: 0.7;
+}
+
+.inspiration-btn :deep(.glass-button__content),
+.inspiration-btn :deep(.glass-button__spinner) {
+  position: relative;
+  z-index: 1;
 }
 
 .input-footer {
