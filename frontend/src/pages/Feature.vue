@@ -1032,10 +1032,12 @@ export default {
   overflow: hidden;
   border-radius: 999px;
   color: #ffffff !important;
-  background:
-    radial-gradient(130% 120% at 0% 100%, rgba(34, 211, 238, 0.9) 0%, rgba(34, 211, 238, 0) 55%),
-    radial-gradient(140% 130% at 100% 0%, rgba(236, 72, 153, 0.9) 0%, rgba(236, 72, 153, 0) 55%),
-    linear-gradient(125deg, rgba(99, 102, 241, 0.9), rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9)) !important;
+  background: linear-gradient(108deg, 
+    rgba(8, 148, 255, 0.6),
+    rgba(201, 89, 221, 0.6) 34%,
+    rgba(255, 46, 84, 0.6) 68%,
+    rgba(255, 144, 4, 0.6)
+  );
   backdrop-filter: blur(14px) saturate(175%);
   -webkit-backdrop-filter: blur(14px) saturate(175%);
   box-shadow:

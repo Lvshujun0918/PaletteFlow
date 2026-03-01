@@ -207,7 +207,7 @@ export function createActionsApi(deps) {
       return
     }
     const colorsText = currentColors.value.join('、')
-    const newPrompt = `对${colorsText}颜色不满意，请按照${currentPrompt.value}重新生成配色方案`
+    const newPrompt = `对${colorsText}颜色不满意，请按照“${currentPrompt.value}”重新生成配色方案`
     addChatMessage('user', 'text', newPrompt)
     handleGenerate(newPrompt)
   }
@@ -448,6 +448,11 @@ export function createActionsApi(deps) {
       return
     }
 
+    if (prompt.includes('不满意')) {
+      chatInput.value = ''
+      handleRegenerate()
+      return
+    }
     addChatMessage('user', 'text', prompt)
     chatInput.value = ''
 
@@ -461,10 +466,6 @@ export function createActionsApi(deps) {
     }
     if (prompt.includes('色盲检查')) {
       handleColorblindCheck()
-      return
-    }
-    if (prompt.includes('不满意')) {
-      handleRegenerate()
       return
     }
     handleGenerate(prompt)
