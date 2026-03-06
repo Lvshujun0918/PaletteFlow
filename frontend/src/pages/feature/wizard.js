@@ -220,7 +220,7 @@ export function useFeatureWizard() {
           },
           popover: {
             title: '发送与灵感',
-            description: '发送会生成/微调配色；灵感按钮会自动生成艺术短句并发送。',
+            description: '点击发送按钮将使用你的配色需求生成配色方案。如果不清楚具体需求，点击灵感按钮将从古诗词中随机挑选一句发送！',
             side: 'top',
             align: 'start',
             nextBtnText: '发送并继续',
