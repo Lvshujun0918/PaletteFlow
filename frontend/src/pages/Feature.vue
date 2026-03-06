@@ -95,7 +95,6 @@
                     <GlassButton
                       variant="primary"
                       class="send-btn send-count-unified"
-                      :loading="loading"
                       :disabled="loading"
                       @click="handleSendPrompt"
                     >
@@ -107,7 +106,8 @@
                         <IconMinus size="16" />
                       </span>
                       <span class="send-count-segment main">
-                        <IconSend v-if="!loading" size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
+                        <span v-if="loading" class="send-main-spinner"></span>
+                        <IconSend v-else size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
                       </span>
                       <span
                         class="send-count-segment side"
@@ -1055,6 +1055,15 @@ export default {
 .send-count-segment.side.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.send-main-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-top-color: rgba(255, 255, 255, 0.2);
+  animation: spin 0.8s linear infinite;
 }
 
 .inspiration-btn {
