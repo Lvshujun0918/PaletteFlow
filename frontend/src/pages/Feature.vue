@@ -138,6 +138,7 @@
             @pick-color="handlePickColorFromDisplay"
             @select-color="handleSelectColorForAI"
             @hover-color="handleAdviceColorHover"
+            @apply-image="openImageApplyModal"
           />
         </div>
       </div>
@@ -241,6 +242,38 @@
           <GlassButton variant="secondary" @click="closeSettingsModal">完成</GlassButton>
         </template>
       </AppModal>
+
+      <AppModal :show="showImageApplyModal" variant="confirm" @close="closeImageApplyModal">
+        <template #header>
+          <h3 class="modal-title">应用配色到图片</h3>
+        </template>
+        <div class="image-apply-content">
+          <input ref="imageApplyInput" type="file" class="hidden-file-input" accept="image/png,image/jpeg" @change="handleImageApplyFileChange" />
+          <div class="image-apply-top">
+            <GlassButton variant="secondary" @click="pickImageApplyFile">选择图片</GlassButton>
+            <span class="image-apply-filename">{{ imageApplyFileName || '未选择图片' }}</span>
+          </div>
+          <div class="image-apply-palette">
+            <span class="image-apply-label">当前配色：</span>
+            <span v-for="(c, i) in currentColors" :key="`apply-color-${i}`" class="image-apply-dot" :style="{ backgroundColor: c }" :title="c"></span>
+          </div>
+          <div class="image-apply-preview" v-if="imageApplySourceUrl || imageApplyResultUrl">
+            <div class="image-apply-panel" v-if="imageApplySourceUrl">
+              <div class="image-apply-title">原图</div>
+              <img :src="imageApplySourceUrl" alt="原图预览" />
+            </div>
+            <div class="image-apply-panel" v-if="imageApplyResultUrl">
+              <div class="image-apply-title">应用结果</div>
+              <img :src="imageApplyResultUrl" alt="套色结果" />
+            </div>
+          </div>
+        </div>
+        <template #actions>
+          <GlassButton variant="secondary" @click="closeImageApplyModal">关闭</GlassButton>
+          <GlassButton variant="primary" :loading="imageApplyLoading" :disabled="!imageApplyFile" @click="applyPaletteToImage">开始处理</GlassButton>
+          <GlassButton variant="primary" :disabled="!imageApplyResultUrl || imageApplyLoading" @click="downloadAppliedImage">下载结果</GlassButton>
+        </template>
+      </AppModal>
     </div>
   </div>
 </template>
@@ -261,7 +294,7 @@ import AppSettings from '../components/AppSettings.vue'
 import logo from '../assets/logo.png'
 import Tooltip from '../components/Tooltip.vue'
 import { STORAGE_KEY, CHAT_STORAGE_KEY, SESSIONS_STORAGE_KEY } from './feature/constants'
-import { generateInspirationText } from '../utils/api'
+import { applyImagePalette, generateInspirationText } from '../utils/api'
 
 export default {
   name: 'App',
@@ -287,6 +320,13 @@ export default {
     const { autoStartWizard } = useFeatureWizard()
     const hoveredAdviceColor = ref('')
     const loadingInspiration = ref(false)
+    const showImageApplyModal = ref(false)
+    const imageApplyInput = ref(null)
+    const imageApplyFile = ref(null)
+    const imageApplyFileName = ref('')
+    const imageApplySourceUrl = ref('')
+    const imageApplyResultUrl = ref('')
+    const imageApplyLoading = ref(false)
     const showRestoreConfirm = ref(false)
     const pendingRestoreIndex = ref(-1)
     const showSettingsModal = ref(false)
@@ -353,6 +393,101 @@ export default {
       } finally {
         loadingInspiration.value = false
       }
+    }
+
+    const revokeImageApplyUrls = () => {
+      if (imageApplySourceUrl.value) {
+        URL.revokeObjectURL(imageApplySourceUrl.value)
+        imageApplySourceUrl.value = ''
+      }
+      if (imageApplyResultUrl.value) {
+        URL.revokeObjectURL(imageApplyResultUrl.value)
+        imageApplyResultUrl.value = ''
+      }
+    }
+
+    const openImageApplyModal = () => {
+      showImageApplyModal.value = true
+    }
+
+    const closeImageApplyModal = () => {
+      showImageApplyModal.value = false
+      imageApplyLoading.value = false
+      imageApplyFile.value = null
+      imageApplyFileName.value = ''
+      revokeImageApplyUrls()
+      if (imageApplyInput.value) {
+        imageApplyInput.value.value = ''
+      }
+    }
+
+    const pickImageApplyFile = () => {
+      if (imageApplyInput.value) {
+        imageApplyInput.value.click()
+      }
+    }
+
+    const handleImageApplyFileChange = (event) => {
+      const file = event?.target?.files?.[0]
+      if (!file) return
+
+      if (!file.type.startsWith('image/')) {
+        featureLogic.notify('请选择 PNG 或 JPG 图片', 'warning')
+        return
+      }
+
+      imageApplyFile.value = file
+      imageApplyFileName.value = file.name
+
+      if (imageApplySourceUrl.value) {
+        URL.revokeObjectURL(imageApplySourceUrl.value)
+      }
+      imageApplySourceUrl.value = URL.createObjectURL(file)
+
+      if (imageApplyResultUrl.value) {
+        URL.revokeObjectURL(imageApplyResultUrl.value)
+        imageApplyResultUrl.value = ''
+      }
+    }
+
+    const applyPaletteToImage = async () => {
+      if (!imageApplyFile.value) {
+        featureLogic.notify('请先选择图片', 'warning')
+        return
+      }
+      if (!featureLogic.currentColors.value || featureLogic.currentColors.value.length === 0) {
+        featureLogic.notify('当前没有可用配色', 'warning')
+        return
+      }
+
+      imageApplyLoading.value = true
+      try {
+        const response = await applyImagePalette(imageApplyFile.value, featureLogic.currentColors.value)
+        const blob = response?.data
+        if (!blob) {
+          throw new Error('empty image response')
+        }
+
+        if (imageApplyResultUrl.value) {
+          URL.revokeObjectURL(imageApplyResultUrl.value)
+        }
+        imageApplyResultUrl.value = URL.createObjectURL(blob)
+        featureLogic.notify('图片套色完成', 'success')
+      } catch (error) {
+        console.error('图片套色失败:', error)
+        featureLogic.notify('图片套色失败，请稍后重试', 'error')
+      } finally {
+        imageApplyLoading.value = false
+      }
+    }
+
+    const downloadAppliedImage = () => {
+      if (!imageApplyResultUrl.value) return
+      const filename = (imageApplyFileName.value || 'image').replace(/\.[^.]+$/, '')
+      const a = document.createElement('a')
+      a.href = imageApplyResultUrl.value
+      a.download = `${filename}_palette.png`
+      a.click()
     }
 
     autoStartWizard()
@@ -450,6 +585,19 @@ export default {
       loadingInspiration,
       handleAdviceColorHover,
       handleInspirationSend,
+      showImageApplyModal,
+      imageApplyInput,
+      imageApplyFile,
+      imageApplyFileName,
+      imageApplySourceUrl,
+      imageApplyResultUrl,
+      imageApplyLoading,
+      openImageApplyModal,
+      closeImageApplyModal,
+      pickImageApplyFile,
+      handleImageApplyFileChange,
+      applyPaletteToImage,
+      downloadAppliedImage,
       adjustColorCount,
       showRestoreConfirm,
       openRestoreConfirm,
@@ -1297,6 +1445,74 @@ export default {
   border-radius: 8px;
 }
 
+.image-apply-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-apply-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.image-apply-filename {
+  font-size: 0.88rem;
+  color: #475569;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.image-apply-palette {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.image-apply-label {
+  font-size: 0.86rem;
+  color: #475569;
+}
+
+.image-apply-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.image-apply-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.image-apply-panel {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-apply-title {
+  font-size: 0.84rem;
+  color: #334155;
+}
+
+.image-apply-panel img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
 .hidden-file-input {
   display: none;
 }
@@ -1319,6 +1535,10 @@ export default {
 @media (max-width: 768px) {
   .chat-bubble {
     max-width: 100%;
+  }
+
+  .image-apply-preview {
+    grid-template-columns: 1fr;
   }
 
   .chat-header-main{

@@ -83,6 +83,7 @@
       <GlassButton class="action-btn" variant="chip" @click="exportAsCSS">导出CSS</GlassButton>
       <GlassButton class="action-btn" variant="chip" @click="exportAsJSON">导出JSON</GlassButton>
       <GlassButton class="action-btn" variant="chip" @click="exportAsImage">导出图片</GlassButton>
+      <GlassButton class="action-btn" variant="chip" @click="$emit('apply-image')">应用到图片</GlassButton>
     </div>
   </div>
 </template>
@@ -102,7 +103,7 @@ export default {
     Tooltip,
     AdviceText
   },
-  emits: ['regenerate', 'pick-color', 'select-color', 'hover-color'],
+  emits: ['regenerate', 'pick-color', 'select-color', 'hover-color', 'apply-image'],
   props: {
     colors: {
       type: Array,

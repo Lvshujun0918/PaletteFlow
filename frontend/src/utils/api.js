@@ -52,4 +52,18 @@ export const generateInspirationText = async () => {
   return { data: { text } }
 }
 
+// 应用配色到图片（返回处理后的图片 blob）
+export const applyImagePalette = (file, colors) => {
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('colors', (colors || []).join(','))
+
+  return apiClient.post('/apply-image-palette', formData, {
+    responseType: 'blob',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 export default apiClient
