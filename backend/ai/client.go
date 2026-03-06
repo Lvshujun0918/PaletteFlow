@@ -238,17 +238,26 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 	defer resp.Body.Close()
 	logging.Info("ai.response.received", "AI response received", logging.Fields{"status": resp.StatusCode})
 
+	bodyBytes, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		logging.Error("ai.response.read_failed", "failed to read AI response body", logging.Fields{"status": resp.StatusCode, "error": readErr.Error()})
+		return nil, fmt.Errorf("read response body: %w", readErr)
+	}
+	bodyText := string(bodyBytes)
+	logging.Info("ai.response.raw", "AI raw response body", logging.Fields{"status": resp.StatusCode, "body": bodyText})
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		logging.Error("ai.response.status_error", "AI API returned non-200", logging.Fields{"status": resp.StatusCode, "body": string(body)})
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+		logging.Error("ai.response.status_error", "AI API returned non-200", logging.Fields{"status": resp.StatusCode, "body": bodyText})
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, bodyText)
 	}
 
 	var chatResp ChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
-		logging.Error("ai.response.decode_failed", "failed to decode AI response", logging.Fields{"error": err.Error()})
+	if err := json.Unmarshal(bodyBytes, &chatResp); err != nil {
+		logging.Error("ai.response.decode_failed", "failed to decode AI response", logging.Fields{"error": err.Error(), "body": bodyText})
 		return nil, fmt.Errorf("decode response: %w", err)
 	}
+
+	logging.Info("ai.response.parsed", "AI parsed response object", logging.Fields{"response": chatResp})
 
 	if len(chatResp.Choices) == 0 {
 		logging.Error("ai.response.empty_choices", "no choices in AI response", nil)
@@ -261,9 +270,10 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 		logging.Error("ai.response.invalid_role", "unexpected role in AI response", logging.Fields{"role": message.Role})
 		return nil, fmt.Errorf("unexpected message role: %s", message.Role)
 	}
-	logging.Info("ai.response.message", "assistant message received", logging.Fields{"tool_call_count": len(message.ToolCalls), "has_content": strings.TrimSpace(message.Content) != ""})
+	logging.Info("ai.response.message", "assistant message received", logging.Fields{"message": message, "tool_call_count": len(message.ToolCalls), "has_content": strings.TrimSpace(message.Content) != ""})
 	if len(message.ToolCalls) > 0 {
 		for _, call := range message.ToolCalls {
+			logging.Info("ai.tool_call.raw", "received tool call", logging.Fields{"tool_call": call})
 			if call.Function.Name != paletteToolName {
 				continue
 			}
@@ -280,6 +290,7 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 	}
 
 	if message.Content != "" {
+		logging.Info("ai.content.raw", "assistant content returned", logging.Fields{"content": message.Content})
 		result, ok := parseResultFromContent(message.Content, colorCount)
 		if ok {
 			logging.Info("ai.content.parse_success", "parsed palette from assistant content", logging.Fields{"color_count": len(result.Colors)})
