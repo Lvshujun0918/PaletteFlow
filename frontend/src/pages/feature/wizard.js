@@ -173,7 +173,7 @@ export function useFeatureWizard() {
           element: '[data-tour="chat-header"]',
           popover: {
             title: '配色对话助手',
-            description: '这里是主工作区，点击右侧按钮可以新建对话与查看历史会话。',
+            description: '这里是主工作区，你可以在此查看主题、输入需求并对配色结果进行持续调整。',
             side: 'bottom',
             align: 'start'
           }

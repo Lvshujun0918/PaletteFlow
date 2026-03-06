@@ -11,9 +11,14 @@
             <p>配色，易如反掌</p>
           </div>
           <div class="header-actions">
-            <Tooltip text="新手引导" position="bottom">
-              <button class="header-action-btn" data-tour="guide-btn" @click="startWizard(true)">
-                <IconAlertCircle size="20" />
+            <Tooltip text="新建对话" position="bottom">
+              <button class="header-action-btn" @click="confirmStartNewConversation">
+                <IconPlus size="20" />
+              </button>
+            </Tooltip>
+            <Tooltip text="查看对话历史" position="bottom">
+              <button class="header-action-btn" @click="handleShowHistory">
+                <IconHistory size="20" />
               </button>
             </Tooltip>
             <Tooltip text="设置" position="bottom">
@@ -33,14 +38,6 @@
               <div class="chat-header-main">
                 配色对话助手
                 <p v-if="currentSessionTheme" class="session-theme-title">主题：{{ currentSessionTheme }}</p>
-              </div>
-              <div class="chat-header-actions">
-                <Tooltip text="新建对话" position="bottom">
-                  <button class="chat-header-btn" @click="confirmStartNewConversation"><IconPlus size="18" /></button>
-                </Tooltip>
-                <Tooltip text="查看对话历史" position="bottom">
-                  <button class="chat-header-btn" @click="handleShowHistory"><IconHistory size="18" /></button>
-                </Tooltip>
               </div>
             </div>
 
@@ -287,7 +284,7 @@ export default {
   },
   setup() {
     const featureLogic = useFeatureLogic()
-    const { startWizard, autoStartWizard } = useFeatureWizard()
+    const { autoStartWizard } = useFeatureWizard()
     const hoveredAdviceColor = ref('')
     const loadingInspiration = ref(false)
     const showRestoreConfirm = ref(false)
@@ -454,7 +451,6 @@ export default {
       handleAdviceColorHover,
       handleInspirationSend,
       adjustColorCount,
-      startWizard,
       showRestoreConfirm,
       openRestoreConfirm,
       cancelRestoreToMessage,
@@ -511,6 +507,7 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -611,34 +608,6 @@ export default {
   align-items: center;
   gap: 10px;
   min-width: 0;
-}
-
-.chat-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.chat-header-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(255, 255, 255, 0.8);
-  color: #2d3748;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-}
-
-.chat-header-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
-  color: #2563eb;
 }
 
 .chat-messages {
@@ -1196,7 +1165,6 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 400px;
 }
 
 /* 历史记录面板样式 */
