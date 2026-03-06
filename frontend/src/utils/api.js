@@ -52,17 +52,29 @@ export const generateInspirationText = async () => {
   return { data: { text } }
 }
 
-// 应用配色到图片（返回处理后的图片 blob）
-export const applyImagePalette = (file, colors) => {
+// 创建图片套色任务
+export const createImagePaletteTask = (file, colors, mode = 'preserve_luma') => {
   const formData = new FormData()
   formData.append('image', file)
   formData.append('colors', (colors || []).join(','))
+  formData.append('mode', mode)
 
   return apiClient.post('/apply-image-palette', formData, {
-    responseType: 'blob',
     headers: {
       'Content-Type': 'multipart/form-data'
     }
+  })
+}
+
+// 查询图片套色任务状态
+export const getImagePaletteTask = (taskId) => {
+  return apiClient.get(`/apply-image-palette/task/${taskId}`)
+}
+
+// 下载图片套色任务结果
+export const downloadImagePaletteTaskResult = (taskId) => {
+  return apiClient.get(`/apply-image-palette/task/${taskId}/result`, {
+    responseType: 'blob'
   })
 }
 
