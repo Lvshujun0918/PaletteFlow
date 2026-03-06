@@ -95,12 +95,14 @@ export default {
   display: flex;
   flex-direction: column;
   border-radius: 24px;
+  min-height: 0;
 }
 
 .modal-card--settings .modal-body {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   padding: 0;
+  min-height: 0;
 }
 
 .modal-card--settings .modal-actions {

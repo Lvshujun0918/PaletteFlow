@@ -237,7 +237,7 @@ export default {
   width: 100%;
   background: rgba(255, 255, 255, 0.5);
   gap: 0;
-  min-height: 500px;
+  min-height: 0;
 }
 
 .settings-sidebar {
@@ -305,11 +305,12 @@ export default {
   overflow-y: auto;
   padding: 24px;
   min-width: 0;
+  min-height: 0;
 }
 
 .settings-panel {
   max-width: 100%;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .settings-panel-title {
