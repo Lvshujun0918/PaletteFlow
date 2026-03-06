@@ -134,14 +134,15 @@ export function createActionsApi(deps) {
     notify(`已选中颜色 ${currentColors.value[index]}，请输入调整需求`, 'info')
   }
 
-  const handleGenerate = async (prompt) => {
+  const handleGenerate = async (prompt, options = {}) => {
     loading.value = true
     try {
       let response
-      let isRefinement = false
+      const mode = options?.mode || 'auto'
+      const canRefine = currentSessionId.value && currentColors.value.length > 0
+      const isRefinement = mode === 'refine' ? canRefine : (mode === 'generate' ? false : canRefine)
 
-      if (currentSessionId.value && currentColors.value.length > 0) {
-        isRefinement = true
+      if (isRefinement) {
         response = await refinePalette(currentColors.value, prompt, colorCount.value)
         currentPrompt.value = prompt
       } else {
@@ -208,7 +209,13 @@ export function createActionsApi(deps) {
     } catch (error) {
       console.error('生成配色失败:', error)
       notify('生成配色失败，请重试', 'error')
-      addChatMessage('assistant', 'text', '生成失败了，请稍后再试。')
+      addChatMessage('assistant', 'text', '生成失败了，请稍后再试。', {
+        retryPrompt: prompt,
+        retryContext: {
+          type: isRefinement ? 'refine' : 'generate',
+          prompt
+        }
+      })
     } finally {
       loading.value = false
     }
@@ -304,10 +311,38 @@ export function createActionsApi(deps) {
     } catch (error) {
       console.error('单色重生成失败:', error)
       notify('单色重生成失败，请重试', 'error')
+      addChatMessage('assistant', 'text', '生成失败了，请稍后再试。', {
+        retryContext: {
+          type: 'single'
+        }
+      })
     } finally {
       loadingSingle.value = false
       loading.value = false
     }
+  }
+
+  const retryFailedMessage = (message) => {
+    const retryContext = message?.payload?.retryContext
+    const fallbackPrompt = message?.payload?.retryPrompt
+
+    if (loading.value || loadingSingle.value) {
+      return
+    }
+
+    if (retryContext?.type === 'single') {
+      loading.value = true
+      handleSingleColorRegenerate()
+      return
+    }
+
+    const retryPrompt = retryContext?.prompt || fallbackPrompt
+    if (!retryPrompt) {
+      return
+    }
+
+    const mode = retryContext?.type === 'refine' ? 'refine' : 'generate'
+    handleGenerate(retryPrompt, { mode })
   }
 
   const insertQuickInput = (text) => {
@@ -501,6 +536,7 @@ export function createActionsApi(deps) {
     handleSingleColorRegenerate,
     insertQuickInput,
     sendQuickPrompt,
+    retryFailedMessage,
     toggleQuickActions,
     handleSendPrompt,
     handleShowHistory,

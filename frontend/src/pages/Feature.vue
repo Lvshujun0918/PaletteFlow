@@ -44,7 +44,18 @@
             <div class="chat-messages">
               <div v-for="(message, index) in chatMessages" :key="message.id" class="chat-message" :class="message.role">
                 <div class="chat-bubble" :class="message.role">
-                  <div v-if="message.type === 'text'">{{ message.content }}</div>
+                  <div v-if="message.type === 'text'" class="text-message-block">
+                    <div>{{ message.content }}</div>
+                    <GlassButton
+                      v-if="message.role === 'assistant' && (message.payload?.retryContext || message.payload?.retryPrompt)"
+                      variant="chip"
+                      custom-class="retry-generate-btn"
+                      :disabled="loading || loadingSingle"
+                      @click="handleRetryFromMessage(message)"
+                    >
+                      重新生成
+                    </GlassButton>
+                  </div>
 
                   <template v-else-if="message.type === 'palette'">
                     <ChatPaletteMessage
@@ -365,6 +376,10 @@ export default {
       }
     }
 
+    const handleRetryFromMessage = (message) => {
+      featureLogic.retryFailedMessage(message)
+    }
+
     const openImageApplyModal = () => {
       showImageApplyModal.value = true
     }
@@ -468,6 +483,7 @@ export default {
       loadingInspiration,
       handleAdviceColorHover,
       handleInspirationSend,
+      handleRetryFromMessage,
       showImageApplyModal,
       openImageApplyModal,
       closeImageApplyModal,
@@ -657,6 +673,21 @@ export default {
   background: rgba(37, 99, 235, 0.12);
   border: 1px solid rgba(37, 99, 235, 0.2);
   max-width: 100%;
+}
+
+.text-message-block {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-bubble :deep(.retry-generate-btn) {
+  align-self: flex-start;
+  min-height: 30px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
 }
 
 .contrast-preview {

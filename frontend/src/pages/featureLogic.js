@@ -371,6 +371,7 @@ export function useFeatureLogic() {
     handleSelectColorForAI: actionsApi.handleSelectColorForAI,
     insertQuickInput: actionsApi.insertQuickInput,
     sendQuickPrompt: actionsApi.sendQuickPrompt,
+    retryFailedMessage: actionsApi.retryFailedMessage,
     toggleQuickActions: actionsApi.toggleQuickActions,
     handleShowHistory: actionsApi.handleShowHistory,
     handleContrastCheck: actionsApi.handleContrastCheck,
