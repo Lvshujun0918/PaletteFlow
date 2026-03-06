@@ -61,10 +61,6 @@
     <!-- 配色信息 -->
     <div class="palette-info glass-card">
       <div class="info-item">
-        <span class="label">提示词:</span>
-        <span class="value">{{ prompt || "还没有生成~"}}</span>
-      </div>
-      <div class="info-item">
         <span class="label">生成时间:</span>
         <span class="value">{{ formatTime(timestamp) }}</span>
       </div>
