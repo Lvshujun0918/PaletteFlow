@@ -1,9 +1,10 @@
 package config
 
 import (
-	"log"
 	"os"
 	"strconv"
+
+	"ai-color-palette/logging"
 
 	"github.com/joho/godotenv"
 )
@@ -20,7 +21,9 @@ var AppConfig *Config
 func LoadConfig() {
 	// 加载.env文件
 	if err := godotenv.Load(); err != nil {
-		log.Println("[WARNING] .env file not found, using environment variables")
+		logging.Warn("config.env", ".env file not found, using environment variables", nil)
+	} else {
+		logging.Info("config.env", ".env loaded", nil)
 	}
 
 	timeout := 30
@@ -37,8 +40,15 @@ func LoadConfig() {
 		AITimeout:    timeout,
 	}
 
+	logging.Info("config.values", "config values prepared", logging.Fields{
+		"ai_base_url": AppConfig.AIAPIBaseURL,
+		"ai_model":    AppConfig.AIModel,
+		"ai_timeout":  AppConfig.AITimeout,
+		"has_api_key": AppConfig.AIAPIKey != "",
+	})
+
 	if AppConfig.AIAPIKey == "" {
-		log.Println("[ERROR] AI_API_KEY is not set in environment variables")
+		logging.Error("config.validation", "AI_API_KEY is not set in environment variables", nil)
 	}
 }
 
@@ -46,6 +56,9 @@ func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
-	log.Printf("[INFO] %s is not set in environment variables, using default value: %s", key, defaultValue)
+	logging.Info("config.default", "env key is empty, fallback to default", logging.Fields{
+		"key":     key,
+		"default": defaultValue,
+	})
 	return defaultValue
 }

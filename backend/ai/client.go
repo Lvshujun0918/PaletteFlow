@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"ai-color-palette/config"
+	"ai-color-palette/logging"
 )
 
 const paletteToolName = "return_palette"
@@ -72,7 +72,9 @@ type PaletteResult struct {
 
 // GenerateColorPalette 使用AI生成配色方案，支持3次重试
 func GenerateColorPalette(prompt string, colorCount int) (*PaletteResult, error) {
+	logging.Info("ai.generate.start", "generate palette called", logging.Fields{"color_count": colorCount, "prompt": prompt})
 	if colorCount < 1 || colorCount > 10 {
+		logging.Warn("ai.generate.invalid_count", "colorCount out of range", logging.Fields{"color_count": colorCount})
 		return nil, fmt.Errorf("colorCount must be between 1 and 10")
 	}
 
@@ -83,11 +85,14 @@ func GenerateColorPalette(prompt string, colorCount int) (*PaletteResult, error)
 
 // GeneratePaletteWithSingleColor 仅替换指定颜色，保持其他颜色不变
 func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt string) (*PaletteResult, error) {
+	logging.Info("ai.single.start", "single color generation called", logging.Fields{"base_count": len(baseColors), "target_index": targetIndex, "prompt": prompt})
 	normalized, ok := normalizeColorsInRange(baseColors, 1, 10)
 	if !ok {
+		logging.Warn("ai.single.invalid_base", "invalid base colors in single color generation", logging.Fields{"base_count": len(baseColors)})
 		return nil, fmt.Errorf("base colors must contain 1 to 10 valid hex values")
 	}
 	if targetIndex < 0 || targetIndex >= len(normalized) {
+		logging.Warn("ai.single.invalid_index", "target index out of range", logging.Fields{"target_index": targetIndex, "base_count": len(normalized)})
 		return nil, fmt.Errorf("targetIndex out of range")
 	}
 
@@ -113,24 +118,28 @@ func GeneratePaletteWithSingleColor(baseColors []string, targetIndex int, prompt
 	if len(result.Colors) == len(normalized) {
 		finalColors[targetIndex] = result.Colors[targetIndex]
 	} else {
-		log.Printf("[WARN] AI returned %d colors in single-color mode, falling back to base for others", len(result.Colors))
+		logging.Warn("ai.single.unexpected_count", "single color mode returned unexpected count", logging.Fields{"result_count": len(result.Colors), "expected_count": len(normalized)})
 		if len(result.Colors) > targetIndex {
 			finalColors[targetIndex] = result.Colors[targetIndex]
 		}
 	}
 
 	result.Colors = finalColors
+	logging.Info("ai.single.success", "single color generation completed", logging.Fields{"result_count": len(result.Colors), "target_index": targetIndex})
 	return result, nil
 }
 
 // RefinePalette 基于现有配色方案进行微调，可指定目标数量
 func RefinePalette(currentColors []string, prompt string, targetColorCount int) (*PaletteResult, error) {
+	logging.Info("ai.refine.start", "refine palette called", logging.Fields{"current_count": len(currentColors), "target_count": targetColorCount, "prompt": prompt})
 	normalized, ok := normalizeColorsInRange(currentColors, 1, 10)
 	if !ok {
+		logging.Warn("ai.refine.invalid_base", "invalid current colors in refine", logging.Fields{"current_count": len(currentColors)})
 		return nil, fmt.Errorf("current colors must contain 1 to 10 valid hex values")
 	}
 
 	if targetColorCount < 1 || targetColorCount > 10 {
+		logging.Warn("ai.refine.invalid_target_count", "targetColorCount out of range", logging.Fields{"target_count": targetColorCount})
 		return nil, fmt.Errorf("targetColorCount must be between 1 and 10")
 	}
 
@@ -160,28 +169,30 @@ func retryGeneratePalette(systemPrompt, userPrompt string, colorCount int) (*Pal
 	var lastErr error
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		log.Printf("[INFO] Attempting to generate palette (attempt %d/%d)", attempt, maxRetries)
+		logging.Info("ai.retry.attempt", "attempting to generate palette", logging.Fields{"attempt": attempt, "max_retries": maxRetries, "color_count": colorCount})
 
 		result, err := attemptGenerateWithPrompt(systemPrompt, userPrompt, colorCount)
 		if err == nil {
+			logging.Info("ai.retry.success", "palette generation attempt succeeded", logging.Fields{"attempt": attempt, "max_retries": maxRetries, "color_count": len(result.Colors)})
 			return result, nil
 		}
 
 		lastErr = err
-		log.Printf("[WARN] Attempt %d failed: %v", attempt, err)
+		logging.Warn("ai.retry.failed", "palette generation attempt failed", logging.Fields{"attempt": attempt, "max_retries": maxRetries, "error": err.Error()})
 
 		if attempt < maxRetries {
 			time.Sleep(time.Second * time.Duration(attempt))
 		}
 	}
 
-	log.Printf("[ERROR] Failed to generate palette after %d attempts", maxRetries)
+	logging.Error("ai.retry.exhausted", "failed to generate palette after all retries", logging.Fields{"max_retries": maxRetries, "error": lastErr.Error()})
 	return nil, fmt.Errorf("all %d retry attempts failed, last error: %w", maxRetries, lastErr)
 }
 
 func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) (*PaletteResult, error) {
 	cfg := config.AppConfig
 	if cfg.AIAPIKey == "" {
+		logging.Error("ai.request.config_missing", "AI API key not configured", nil)
 		return nil, fmt.Errorf("AI API key not configured")
 	}
 
@@ -202,14 +213,16 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
+		logging.Error("ai.request.marshal_failed", "failed to marshal AI request", logging.Fields{"error": err.Error()})
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
-	log.Printf("[INFO] AI input messages: %s", jsonData)
+	logging.Info("ai.request.payload", "AI request payload prepared", logging.Fields{"payload_size": len(jsonData), "model": cfg.AIModel, "color_count": colorCount})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.AITimeout)*time.Second)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, "POST", cfg.AIAPIBaseURL+"/chat/completions", bytes.NewBuffer(jsonData))
 	if err != nil {
+		logging.Error("ai.request.build_failed", "failed to build AI request", logging.Fields{"error": err.Error()})
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 
@@ -219,30 +232,36 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		logging.Error("ai.request.send_failed", "failed to send AI request", logging.Fields{"error": err.Error()})
 		return nil, fmt.Errorf("send request: %w", err)
 	}
 	defer resp.Body.Close()
+	logging.Info("ai.response.received", "AI response received", logging.Fields{"status": resp.StatusCode})
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
+		logging.Error("ai.response.status_error", "AI API returned non-200", logging.Fields{"status": resp.StatusCode, "body": string(body)})
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var chatResp ChatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
+		logging.Error("ai.response.decode_failed", "failed to decode AI response", logging.Fields{"error": err.Error()})
 		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
 	if len(chatResp.Choices) == 0 {
+		logging.Error("ai.response.empty_choices", "no choices in AI response", nil)
 		return nil, fmt.Errorf("no response from AI")
 	}
 
 	choice := chatResp.Choices[0]
 	message := choice.Message
 	if message.Role != "assistant" {
+		logging.Error("ai.response.invalid_role", "unexpected role in AI response", logging.Fields{"role": message.Role})
 		return nil, fmt.Errorf("unexpected message role: %s", message.Role)
 	}
-	log.Printf("[INFO] AI returns messages: %s", message)
+	logging.Info("ai.response.message", "assistant message received", logging.Fields{"tool_call_count": len(message.ToolCalls), "has_content": strings.TrimSpace(message.Content) != ""})
 	if len(message.ToolCalls) > 0 {
 		for _, call := range message.ToolCalls {
 			if call.Function.Name != paletteToolName {
@@ -250,22 +269,26 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 			}
 			result, err := parseToolCallResult(call, colorCount)
 			if err != nil {
+				logging.Error("ai.tool_call.parse_failed", "failed to parse palette tool call", logging.Fields{"error": err.Error()})
 				return nil, err
 			}
-			log.Println("[INFO] AI Tool Call Generated Successfully")
+			logging.Info("ai.tool_call.success", "palette tool call parsed", logging.Fields{"color_count": len(result.Colors)})
 			return result, nil
 		}
+		logging.Error("ai.tool_call.missing_palette", "tool call exists but no palette tool call found", nil)
 		return nil, fmt.Errorf("tool call returned without expected palette data")
 	}
 
 	if message.Content != "" {
 		result, ok := parseResultFromContent(message.Content, colorCount)
 		if ok {
-			log.Println("[INFO] AI returned result in content, using parsed result")
+			logging.Info("ai.content.parse_success", "parsed palette from assistant content", logging.Fields{"color_count": len(result.Colors)})
 			return result, nil
 		}
+		logging.Warn("ai.content.parse_failed", "assistant content exists but could not parse palette", nil)
 	}
 
+	logging.Error("ai.response.invalid_payload", "AI response missing usable palette data", nil)
 	return nil, fmt.Errorf("AI Tool Call Failed: no tool_calls and no parsable result in content")
 }
 

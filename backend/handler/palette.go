@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"ai-color-palette/ai"
+	"ai-color-palette/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,26 +40,31 @@ type RefinePaletteRequest struct {
 
 // GeneratePaletteHandler 使用AI生成配色方案，失败时降级到随机生成
 func GeneratePaletteHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
+	logging.Info("palette.generate.start", "generate palette request received", logging.Fields{"request_id": requestID})
+
 	var req ColorPaletteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logging.Warn("palette.generate.invalid_request", "failed to bind generate request", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// 尝试使用AI生成配色
-	log.Printf("[INFO] Using %s to create colors:\n", req.Prompt)
+	logging.Info("palette.generate.input", "generate palette input parsed", logging.Fields{"request_id": requestID, "prompt": req.Prompt, "color_count": req.ColorCount})
 	colorCount := req.ColorCount
 	if colorCount == 0 {
 		colorCount = 5
 	}
 	if colorCount < 1 || colorCount > 10 {
+		logging.Warn("palette.generate.invalid_count", "color_count out of range", logging.Fields{"request_id": requestID, "color_count": colorCount})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "color_count must be between 1 and 10"})
 		return
 	}
 
 	normalizedPrompt := strings.TrimSpace(req.Prompt)
 	if normalizedPrompt == "森林配色" {
-		log.Printf("[INFO] Demo prompt hit, return preset palette directly: %s\n", req.Prompt)
+		logging.Info("palette.generate.demo_forest", "forest preset matched", logging.Fields{"request_id": requestID})
 		forestColors := []string{
 			"#2D5016", "#4A7C59", "#8F9779", "#C8D5B9", "#F8F6F0",
 			"#1F3B1A", "#5F8F6F", "#A7B89A", "#DCE6D1", "#EEF3E8",
@@ -75,7 +80,7 @@ func GeneratePaletteHandler(c *gin.Context) {
 	}
 
 	if strings.Contains(req.Prompt, "烧鸡") {
-		log.Printf("[INFO] Bingo~ %s\n", req.Prompt)
+		logging.Info("palette.generate.easter_egg", "easter egg prompt matched", logging.Fields{"request_id": requestID})
 		colors := []string{"#000000", "#FFFFFF", "#1E3A5F", "#2D5B8A", "#E5E5E5", "#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6"}
 		response := ColorPaletteResponse{
 			Colors:      colors[:colorCount],
@@ -88,7 +93,7 @@ func GeneratePaletteHandler(c *gin.Context) {
 	}
 	result, err := ai.GenerateColorPalette(req.Prompt, colorCount)
 	if err != nil {
-		log.Printf("[ERROR] AI generation failed: %v, falling back to random generation", err)
+		logging.Error("palette.generate.ai_failed", "ai generation failed, fallback random", logging.Fields{"request_id": requestID, "error": err.Error()})
 		// 降级到随机生成
 		rand.Seed(time.Now().UnixNano())
 		result = &ai.PaletteResult{
@@ -96,6 +101,8 @@ func GeneratePaletteHandler(c *gin.Context) {
 			Advice: "由于网络原因，AI调用失败。本次为随机生成配色，可作为灵感草案使用。建议在主色与辅色之间调整明度对比以提升层次感。",
 		}
 	}
+
+	logging.Info("palette.generate.success", "generate palette completed", logging.Fields{"request_id": requestID, "color_count": len(result.Colors)})
 
 	response := ColorPaletteResponse{
 		Colors:      result.Colors,
@@ -109,18 +116,24 @@ func GeneratePaletteHandler(c *gin.Context) {
 
 // RegenerateSingleColorHandler 仅重新生成指定位置的颜色
 func RegenerateSingleColorHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
+	logging.Info("palette.single.start", "single color regenerate request received", logging.Fields{"request_id": requestID})
+
 	var req SingleColorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logging.Warn("palette.single.invalid_request", "failed to bind single color request", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if len(req.BaseColors) < 1 || len(req.BaseColors) > 10 {
+		logging.Warn("palette.single.invalid_base_colors", "base colors length out of range", logging.Fields{"request_id": requestID, "count": len(req.BaseColors)})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "base_colors must contain between 1 and 10 colors"})
 		return
 	}
 
 	if req.TargetIndex < 0 || req.TargetIndex >= len(req.BaseColors) {
+		logging.Warn("palette.single.invalid_target_index", "target index out of range", logging.Fields{"request_id": requestID, "target_index": req.TargetIndex, "count": len(req.BaseColors)})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "target_index out of range"})
 		return
 	}
@@ -130,6 +143,7 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 	for _, color := range req.BaseColors {
 		candidate := strings.ToUpper(strings.TrimSpace(color))
 		if !hexRe.MatchString(candidate) {
+			logging.Warn("palette.single.invalid_hex", "invalid hex in base colors", logging.Fields{"request_id": requestID, "color": color})
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid color: %s", color)})
 			return
 		}
@@ -138,7 +152,7 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 
 	normalizedPrompt := strings.TrimSpace(req.Prompt)
 	if normalizedPrompt == "改成蓝色" {
-		log.Printf("[INFO] Demo single-color prompt hit, return preset replacement directly: %s\n", req.Prompt)
+		logging.Info("palette.single.demo", "single-color demo prompt matched", logging.Fields{"request_id": requestID})
 		resultColors := make([]string, len(normalized))
 		copy(resultColors, normalized)
 		resultColors[req.TargetIndex] = "#2563EB"
@@ -153,10 +167,10 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 		return
 	}
 
-	log.Printf("[INFO] Using %s to replace single color:\n", req.Prompt)
+	logging.Info("palette.single.input", "single color regenerate input parsed", logging.Fields{"request_id": requestID, "prompt": req.Prompt, "target_index": req.TargetIndex})
 	result, err := ai.GeneratePaletteWithSingleColor(normalized, req.TargetIndex, req.Prompt)
 	if err != nil {
-		log.Printf("[ERROR] AI single color generation failed: %v, fallback to replace target only", err)
+		logging.Error("palette.single.ai_failed", "single color ai generation failed, fallback random target", logging.Fields{"request_id": requestID, "error": err.Error()})
 		rand.Seed(time.Now().UnixNano())
 		replacement := fmt.Sprintf("#%06X", rand.Intn(0xFFFFFF))
 		normalized[req.TargetIndex] = replacement
@@ -165,6 +179,8 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 			Advice: "AI 调用失败，已为指定位置生成备选颜色。建议再尝试一次以获得更佳效果。",
 		}
 	}
+
+	logging.Info("palette.single.success", "single color regenerate completed", logging.Fields{"request_id": requestID, "target_index": req.TargetIndex})
 
 	// 再次确保只有目标位置被替换
 	if len(result.Colors) == len(normalized) {
@@ -186,8 +202,12 @@ func RegenerateSingleColorHandler(c *gin.Context) {
 
 // RefinePaletteHandler 基于现有配色方案进行微调
 func RefinePaletteHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
+	logging.Info("palette.refine.start", "refine palette request received", logging.Fields{"request_id": requestID})
+
 	var req RefinePaletteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logging.Warn("palette.refine.invalid_request", "failed to bind refine request", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -197,17 +217,18 @@ func RefinePaletteHandler(c *gin.Context) {
 		colorCount = len(req.CurrentColors)
 	}
 	if colorCount < 1 || colorCount > 10 {
+		logging.Warn("palette.refine.invalid_count", "color_count out of range", logging.Fields{"request_id": requestID, "color_count": colorCount})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "color_count must be between 1 and 10"})
 		return
 	}
 
 	result, err := ai.RefinePalette(req.CurrentColors, req.Prompt, colorCount)
 	if err != nil {
-		log.Printf("[ERROR] Refine palette failed: %v", err)
+		logging.Error("palette.refine.failed", "refine palette failed", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refine palette"})
 		return
 	}
-	log.Printf("[INFO] Using %s to refine colors:\n", req.Prompt)
+	logging.Info("palette.refine.success", "refine palette completed", logging.Fields{"request_id": requestID, "prompt": req.Prompt, "color_count": len(result.Colors)})
 
 	response := ColorPaletteResponse{
 		Colors:      result.Colors,

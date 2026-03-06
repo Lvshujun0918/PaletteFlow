@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"ai-color-palette/logging"
+
 	"github.com/gin-gonic/gin"
 
 	_ "image/jpeg"
@@ -70,14 +72,19 @@ var (
 // - colors: 逗号分隔 HEX 颜色（必填），如: #1F2937,#3B82F6,#F59E0B
 // - mode: 映射模式（可选）: lab | preserve_luma | soft_blend，默认 preserve_luma
 func ApplyImagePaletteHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
+	logging.Info("image.apply.start", "apply image palette request received", logging.Fields{"request_id": requestID})
+
 	fileHeader, err := c.FormFile("image")
 	if err != nil {
+		logging.Warn("image.apply.invalid_file", "missing image file", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing image file"})
 		return
 	}
 
 	paletteInput := strings.TrimSpace(c.PostForm("colors"))
 	if paletteInput == "" {
+		logging.Warn("image.apply.invalid_colors", "missing colors", logging.Fields{"request_id": requestID})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing colors"})
 		return
 	}
@@ -86,12 +93,14 @@ func ApplyImagePaletteHandler(c *gin.Context) {
 
 	palette, err := parsePaletteFromForm(paletteInput)
 	if err != nil {
+		logging.Warn("image.apply.palette_parse_failed", "invalid palette input", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
+		logging.Error("image.apply.open_failed", "failed to open uploaded image", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to open image"})
 		return
 	}
@@ -99,11 +108,19 @@ func ApplyImagePaletteHandler(c *gin.Context) {
 
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
+		logging.Error("image.apply.read_failed", "failed to read uploaded image", logging.Fields{"request_id": requestID, "error": err.Error()})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read image"})
 		return
 	}
 
 	task := createImageTask(fileHeader.Filename, mode)
+	logging.Info("image.apply.task_created", "image apply task created", logging.Fields{
+		"request_id": requestID,
+		"task_id":    task.ID,
+		"mode":       mode,
+		"file_size":  len(fileBytes),
+		"color_count": len(palette),
+	})
 	go processImageTask(task.ID, fileBytes, palette, mode)
 
 	c.JSON(http.StatusAccepted, toTaskResponse(task))
@@ -111,31 +128,38 @@ func ApplyImagePaletteHandler(c *gin.Context) {
 
 // GetImagePaletteTaskHandler 查询图片套色任务进度
 func GetImagePaletteTaskHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
 	taskID := strings.TrimSpace(c.Param("taskId"))
 	task, ok := getImageTask(taskID)
 	if !ok {
+		logging.Warn("image.apply.task_not_found", "task id not found in status query", logging.Fields{"request_id": requestID, "task_id": taskID})
 		c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
 		return
 	}
+	logging.Info("image.apply.task_status", "task status queried", logging.Fields{"request_id": requestID, "task_id": taskID, "status": task.Status, "progress": task.Progress})
 
 	c.JSON(http.StatusOK, toTaskResponse(task))
 }
 
 // DownloadImagePaletteTaskResultHandler 下载图片套色任务结果
 func DownloadImagePaletteTaskResultHandler(c *gin.Context) {
+	requestID := logging.RequestIDFromGin(c)
 	taskID := strings.TrimSpace(c.Param("taskId"))
 	task, ok := getImageTask(taskID)
 	if !ok {
+		logging.Warn("image.apply.task_not_found", "task id not found in result download", logging.Fields{"request_id": requestID, "task_id": taskID})
 		c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
 		return
 	}
 
 	if task.Status == "failed" {
+		logging.Warn("image.apply.task_failed", "task failed before download", logging.Fields{"request_id": requestID, "task_id": taskID, "error": task.Error})
 		c.JSON(http.StatusBadRequest, gin.H{"error": task.Error})
 		return
 	}
 
 	if task.Status != "completed" || len(task.ResultBytes) == 0 {
+		logging.Warn("image.apply.task_not_completed", "task not completed when downloading result", logging.Fields{"request_id": requestID, "task_id": taskID, "status": task.Status})
 		c.JSON(http.StatusConflict, gin.H{"error": "task not completed"})
 		return
 	}
@@ -147,14 +171,18 @@ func DownloadImagePaletteTaskResultHandler(c *gin.Context) {
 
 	c.Header("Content-Type", "image/png")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	logging.Info("image.apply.download_success", "task result downloaded", logging.Fields{"request_id": requestID, "task_id": taskID, "filename": filename, "bytes": len(task.ResultBytes)})
 	c.Data(http.StatusOK, "image/png", task.ResultBytes)
 }
 
 func processImageTask(taskID string, fileBytes []byte, palette []color.NRGBA, mode string) {
+	start := time.Now()
+	logging.Info("image.apply.task_process_start", "image task processing started", logging.Fields{"task_id": taskID, "mode": mode, "file_size": len(fileBytes), "color_count": len(palette)})
 	setTaskProgress(taskID, 5, "processing", "正在解析图片")
 
 	img, _, err := image.Decode(bytes.NewReader(fileBytes))
 	if err != nil {
+		logging.Error("image.apply.decode_failed", "failed to decode image", logging.Fields{"task_id": taskID, "error": err.Error()})
 		setTaskFailed(taskID, "unsupported or invalid image")
 		return
 	}
@@ -176,11 +204,13 @@ func processImageTask(taskID string, fileBytes []byte, palette []color.NRGBA, mo
 	setTaskProgress(taskID, 95, "processing", "正在生成结果")
 	var out bytes.Buffer
 	if err := png.Encode(&out, processed); err != nil {
+		logging.Error("image.apply.encode_failed", "failed to encode processed image", logging.Fields{"task_id": taskID, "error": err.Error()})
 		setTaskFailed(taskID, "failed to encode image")
 		return
 	}
 
 	setTaskCompleted(taskID, out.Bytes())
+	logging.Info("image.apply.task_process_success", "image task processing completed", logging.Fields{"task_id": taskID, "duration_ms": time.Since(start).Milliseconds(), "result_bytes": out.Len()})
 }
 
 func normalizeImageMode(mode string) string {
@@ -483,6 +513,7 @@ func createImageTask(filename, mode string) *imageApplyTask {
 	imageTaskStoreMu.Lock()
 	imageTaskStore[task.ID] = task
 	imageTaskStoreMu.Unlock()
+	logging.Info("image.apply.task_store_create", "task stored", logging.Fields{"task_id": task.ID, "mode": mode, "filename": task.Filename})
 	return cloneTask(task)
 }
 
@@ -523,6 +554,7 @@ func setTaskFailed(taskID, errMsg string) {
 		task.UpdatedAt = time.Now()
 	}
 	imageTaskStoreMu.Unlock()
+	logging.Error("image.apply.task_failed", "task marked failed", logging.Fields{"task_id": taskID, "error": errMsg})
 }
 
 func setTaskCompleted(taskID string, result []byte) {
@@ -534,6 +566,7 @@ func setTaskCompleted(taskID string, result []byte) {
 		task.UpdatedAt = time.Now()
 	}
 	imageTaskStoreMu.Unlock()
+	logging.Info("image.apply.task_completed", "task marked completed", logging.Fields{"task_id": taskID, "result_bytes": len(result)})
 }
 
 func toTaskResponse(task *imageApplyTask) imageApplyTaskResponse {
