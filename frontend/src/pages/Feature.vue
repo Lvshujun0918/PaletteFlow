@@ -1181,6 +1181,7 @@ export default {
 
 /* 新增样式：会话主题标题 */
 .session-theme-title {
+  flex-shrink: 9999;
   font-weight: 500;
   color: #4a5568;
   white-space: nowrap;
