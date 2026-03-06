@@ -43,7 +43,6 @@ func main() {
 	router.POST("/api/generate-palette", handler.GeneratePaletteHandler)
 	router.POST("/api/refine-palette", handler.RefinePaletteHandler)
 	router.POST("/api/regenerate-color", handler.RegenerateSingleColorHandler)
-	router.GET("/api/generate-inspiration", handler.GenerateInspirationHandler)
 	log.Println("[INFO] GIN Server ready")
 	log.Println("[INFO] GIN Server starting on :5208")
 	if err := router.Run(":5208"); err != nil {

@@ -38,10 +38,6 @@ type RefinePaletteRequest struct {
 	ColorCount    int      `json:"color_count"`
 }
 
-type InspirationResponse struct {
-	Text string `json:"text"`
-}
-
 // GeneratePaletteHandler 使用AI生成配色方案，失败时降级到随机生成
 func GeneratePaletteHandler(c *gin.Context) {
 	var req ColorPaletteRequest
@@ -221,35 +217,6 @@ func RefinePaletteHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
-}
-
-// GenerateInspirationHandler 生成灵感文案（约20字艺术短句）
-func GenerateInspirationHandler(c *gin.Context) {
-	text, err := ai.GenerateInspirationText()
-	if err != nil {
-		log.Printf("[ERROR] Inspiration generation failed: %v", err)
-		fallback := []string{
-			"暮色流金映窗影留白自成诗",
-			"雾蓝轻覆旧梦光影在指尖醒",
-			"晨风穿过画布暖灰悄然生花",
-			"晚霞落入湖心静谧缓缓铺陈",
-			"月白漫过砖墙余温仍在回响",
-		}
-		rand.Seed(time.Now().UnixNano())
-		c.JSON(http.StatusOK, InspirationResponse{Text: fallback[rand.Intn(len(fallback))]})
-		return
-	}
-
-	clean := strings.TrimSpace(text)
-	runes := []rune(clean)
-	if len(runes) > 20 {
-		clean = string(runes[:20])
-	}
-	if clean == "" {
-		clean = "暮色流金映窗影留白自成诗"
-	}
-
-	c.JSON(http.StatusOK, InspirationResponse{Text: clean})
 }
 
 // 生成随机配色

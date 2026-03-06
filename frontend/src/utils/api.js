@@ -33,8 +33,23 @@ export const healthCheck = () => {
 }
 
 // 生成灵感短句
-export const generateInspirationText = () => {
-  return apiClient.get('/generate-inspiration')
+export const generateInspirationText = async () => {
+  const response = await axios.get('https://v1.hitokoto.cn', {
+    timeout: 10000,
+    params: {
+      c: 'i'
+    }
+  })
+
+  const hitokoto = (response?.data?.hitokoto || '').trim()
+  const from = (response?.data?.from || '').trim()
+
+  if (!hitokoto) {
+    throw new Error('empty hitokoto text')
+  }
+
+  const text = from ? `${hitokoto} ——《${from}》` : hitokoto
+  return { data: { text } }
 }
 
 export default apiClient
