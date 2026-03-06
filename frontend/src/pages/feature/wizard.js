@@ -308,7 +308,7 @@ export function useFeatureWizard() {
           },
           popover: {
             title: '提交单色调整',
-            description: '点击后会调用后端演示直返结果，并在完成后自动进入下一步。',
+            description: '点击提交后，AI会根据需求调整配色方案中选中的颜色。',
             side: 'top',
             align: 'start',
             nextBtnText: '发送并继续',
