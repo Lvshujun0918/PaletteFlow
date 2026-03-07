@@ -1,4 +1,4 @@
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { healthCheck } from '../utils/api'
 import { notify } from '../utils/notify'
@@ -316,7 +316,12 @@ export function useFeatureLogic() {
     }
   }
 
-  const confirmStartNewConversation = () => {
+  const confirmStartNewConversation = async () => {
+    const hadSessionChoiceOpen = showSessionChoice.value
+    if (hadSessionChoiceOpen) {
+      showSessionChoice.value = false
+      await nextTick()
+    }
     showNewConversationConfirm.value = true
   }
 
