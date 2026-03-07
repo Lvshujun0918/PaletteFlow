@@ -99,33 +99,15 @@
                   <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('色盲检查')">色盲检查</GlassButton>
                 </div>
                 <div class="send-actions" data-tour="send-actions">
-                  <div class="send-count-control" data-tour="color-count">
-                    <GlassButton
-                      variant="primary"
-                      class="send-btn send-count-unified"
-                      :disabled="loading"
-                      @click="handleSendPrompt"
-                    >
-                      <span
-                        class="send-count-segment side"
-                        :class="{ disabled: loading || colorCount <= 1 }"
-                        @click.stop="adjustColorCount(-1)"
-                      >
-                        <IconMinus size="16" />
-                      </span>
-                      <span class="send-count-segment main">
-                        <span v-if="loading" class="send-main-spinner"></span>
-                        <IconSend v-else size="18" />{{ loading ? '生成中...' : `生成${colorCount}个` }}
-                      </span>
-                      <span
-                        class="send-count-segment side"
-                        :class="{ disabled: loading || colorCount >= 10 }"
-                        @click.stop="adjustColorCount(1)"
-                      >
-                        <IconPlus size="16" />
-                      </span>
-                    </GlassButton>
-                  </div>
+                  <GlassButton
+                    variant="primary"
+                    class="send-btn"
+                    :loading="loading"
+                    :disabled="loading"
+                    @click="handleSendPrompt"
+                  >
+                    <IconSend v-if="!loading" size="18" />发送
+                  </GlassButton>
                   <GlassButton class="inspiration-btn" :loading="loadingInspiration"
                     :disabled="loading || loadingInspiration" @click="handleInspirationSend">
                     <IconSparkles v-if="!loadingInspiration" size="18" />灵感
@@ -191,16 +173,12 @@
       <!-- 通知 -->
       <Notification />
 
-      <AppModal :show="showNewConversationConfirm" variant="confirm" @close="cancelStartNewConversation">
-        <template #header>
-          <h3 class="modal-title">请确认</h3>
-        </template>
-        <div class="modal-text">你确定要新建一个配色对话吗？</div>
-        <template #actions>
-          <GlassButton variant="secondary" @click="cancelStartNewConversation">取消</GlassButton>
-          <GlassButton variant="primary" @click="proceedStartNewConversation">确认新建</GlassButton>
-        </template>
-      </AppModal>
+      <NewConversationModal
+        :show="showNewConversationConfirm"
+        :initial-color-count="pendingColorCount"
+        @close="cancelStartNewConversation"
+        @confirm="handleConfirmNewConversation"
+      />
 
       <AppModal :show="showRestoreConfirm" variant="confirm" @close="cancelRestoreToMessage">
         <template #header>
@@ -233,7 +211,7 @@
           </div>
         </div>
         <template #actions>
-          <GlassButton data-tour="chat-start" variant="primary" custom-class="full-width" @click="proceedStartNewConversation">
+          <GlassButton data-tour="chat-start" variant="primary" custom-class="full-width" @click="confirmStartNewConversation">
             <IconEdit2 size="18" style="color: white" />开始新一轮配色
           </GlassButton>
         </template>
@@ -277,6 +255,7 @@ import ColorPickerModal from '../components/ColorPickerModal.vue'
 import AppModal from '../components/AppModal.vue'
 import AppSettings from '../components/AppSettings.vue'
 import ImageApplyModal from '../components/ImageApplyModal.vue'
+import NewConversationModal from '../components/NewConversationModal.vue'
 import logo from '../assets/logo.png'
 import Tooltip from '../components/Tooltip.vue'
 import { STORAGE_KEY, CHAT_STORAGE_KEY, SESSIONS_STORAGE_KEY } from './feature/constants'
@@ -295,7 +274,8 @@ export default {
     ChatColorblindMessage,
     ColorPickerModal,
     Tooltip,
-    ImageApplyModal
+    ImageApplyModal,
+    NewConversationModal
   },
   data() {
     return {
@@ -308,6 +288,7 @@ export default {
     const hoveredAdviceColor = ref('')
     const loadingInspiration = ref(false)
     const showImageApplyModal = ref(false)
+    const pendingColorCount = ref(Number(featureLogic.colorCount.value) || 5)
     const showRestoreConfirm = ref(false)
     const pendingRestoreIndex = ref(-1)
     const showSettingsModal = ref(false)
@@ -330,10 +311,19 @@ export default {
       hoveredAdviceColor.value = color || ''
     }
 
-    const adjustColorCount = (delta) => {
-      const current = Number(featureLogic.colorCount.value) || 1
-      const next = Math.max(1, Math.min(10, current + delta))
-      featureLogic.colorCount.value = next
+    const confirmStartNewConversation = () => {
+      pendingColorCount.value = Math.max(1, Math.min(10, Number(featureLogic.colorCount.value) || 5))
+      featureLogic.confirmStartNewConversation()
+    }
+
+    const cancelStartNewConversation = () => {
+      featureLogic.cancelStartNewConversation()
+    }
+
+    const handleConfirmNewConversation = (count) => {
+      pendingColorCount.value = Math.max(1, Math.min(10, Number(count) || 5))
+      featureLogic.colorCount.value = pendingColorCount.value
+      featureLogic.proceedStartNewConversation()
     }
 
     const openRestoreConfirm = (index) => {
@@ -487,7 +477,10 @@ export default {
       showImageApplyModal,
       openImageApplyModal,
       closeImageApplyModal,
-      adjustColorCount,
+      pendingColorCount,
+      confirmStartNewConversation,
+      cancelStartNewConversation,
+      handleConfirmNewConversation,
       showRestoreConfirm,
       openRestoreConfirm,
       cancelRestoreToMessage,
@@ -1033,58 +1026,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.send-count-control {
-  display: inline-flex;
-  align-items: center;
-}
-
-.send-count-unified {
-  padding: 0 !important;
-  min-height: 46px;
-  border-radius: 999px !important;
-  overflow: hidden;
-}
-
-.send-count-segment {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  gap: 2px;
-}
-
-.send-count-segment.side {
-  width: 35px;
-  min-width: 35px;
-  font-size: 1.15rem;
-  text-align: center;
-  user-select: none;
-}
-
-.send-count-segment.side :deep(svg) {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.4;
-}
-
-.send-count-segment.side:not(.disabled):hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.send-count-segment.side.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.send-main-spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-top-color: rgba(255, 255, 255, 0.2);
-  animation: spin 0.8s linear infinite;
 }
 
 .inspiration-btn {
