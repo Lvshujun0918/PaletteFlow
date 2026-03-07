@@ -4,7 +4,7 @@
       <div class="top-content">
         <div class="header glass-panel">
           <div class="logo-container">
-            <img :src="logoUrl" alt="Logo" class="logo" @error="handleLogoError">
+            <img :src="logoUrl" alt="Logo" class="logo" decoding="async" fetchpriority="low" @error="handleLogoError">
           </div>
           <div class="header-text">
             <h1>PaletteFlow</h1>

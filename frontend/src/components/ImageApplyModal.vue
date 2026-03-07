@@ -67,14 +67,14 @@
             <div class="preview-panel upload-panel" @click="pickFile">
               <div class="preview-title">原图（点击上传）</div>
               <div v-if="sourceUrl" class="preview-image-wrap">
-                <img :src="sourceUrl" alt="原图预览" />
+                <img :src="sourceUrl" alt="原图预览" loading="lazy" decoding="async" />
               </div>
               <div v-else class="upload-placeholder">点击此处上传图片</div>
               <div class="upload-filename">{{ fileName || '支持 PNG / JPG' }}</div>
             </div>
             <div class="preview-panel" v-if="resultUrl">
               <div class="preview-title">应用结果</div>
-              <img :src="resultUrl" alt="套色结果" />
+              <img :src="resultUrl" alt="套色结果" loading="lazy" decoding="async" />
             </div>
           </div>
         </section>

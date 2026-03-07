@@ -19,6 +19,8 @@
           :src="logoUrl" 
           alt="Logo" 
           class="logo"
+          decoding="async"
+          fetchpriority="high"
           @error="handleLogoError"
         >
       </div>
@@ -136,10 +138,7 @@ export default {
     // 进入主页面
     async enterMainPage() {
       this.isLoading = true
-      
-      // 模拟网络请求延迟
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
+
       // 实际导航逻辑
       if (this.$router) {
         this.$router.push('/feature')
@@ -160,11 +159,30 @@ export default {
     // 切换背景图片
     changeBackground() {
       this.currentBgIndex = (this.currentBgIndex + 1) % this.backgroundImages.length
+    },
+    preloadImage(src) {
+      if (!src) return
+      const image = new Image()
+      image.decoding = 'async'
+      image.src = src
+    },
+    warmupBackgroundImages() {
+      const tasks = this.backgroundImages.filter((_, index) => index !== this.currentBgIndex)
+      const run = () => {
+        tasks.forEach((src) => this.preloadImage(src))
+      }
+
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(run, { timeout: 2000 })
+        return
+      }
+      setTimeout(run, 300)
     }
   },
   mounted() {
     // 开始背景图片轮播
     this.intervalId = setInterval(this.changeBackground, 3000)
+    this.warmupBackgroundImages()
     
     // 监听路由变化
     if (this.$route && this.$route.path !== '/') {
