@@ -183,7 +183,10 @@ export function useFeatureLogic() {
       const storedChat = storageApi.getStoredChatMessages()
       if (storedChat.length > 1) {
         showSessionChoice.value = true
+        return
       }
+
+      showSessionChoice.value = true
     }
   )
 
@@ -286,17 +289,8 @@ export function useFeatureLogic() {
         router.replace('/feature')
       }
     } else {
-      if (savedSessions.value.length > 0) {
-        showSessionChoice.value = true
-      } else {
-        storageApi.loadHistoriesFromStorage()
-        const storedChat = storageApi.getStoredChatMessages()
-        if (storedChat.length > 1) {
-          showSessionChoice.value = true
-        } else {
-          sessionApi.startNewConversation()
-        }
-      }
+      storageApi.loadHistoriesFromStorage()
+      showSessionChoice.value = true
     }
 
     if (currentColors.value && currentColors.value.length > 0) {
