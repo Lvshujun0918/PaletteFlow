@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import App from '../App.vue'
 import Feature from '../pages/Feature.vue'
-import { isFeatureWizardCompleted } from '../pages/feature/wizard'
+
+const WIZARD_STORAGE_KEY = 'paletteflow_wizard_completed_v3'
+const isFeatureWizardCompleted = () => localStorage.getItem(WIZARD_STORAGE_KEY) === '1'
 
 const routes = [
   { path: '/', component: App },

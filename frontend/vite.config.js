@@ -23,7 +23,11 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks(id) {
             if (!id.includes('node_modules')) return
-            if (id.includes('vue')) return 'vue-vendor'
+            if (id.includes('driver.js')) return 'driver-vendor'
+            if (id.includes('lucide-vue-next')) return 'icons-vendor'
+            if (id.includes('axios')) return 'http-vendor'
+            if (id.includes('vue-router')) return 'router-vendor'
+            if (id.includes('/vue/')) return 'vue-vendor'
             return 'vendor'
           }
         }
