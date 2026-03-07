@@ -5,7 +5,8 @@ import { notify } from '../utils/notify'
 import {
   DEFAULT_COLORS,
   COLORBLIND_TYPES,
-  createWelcomeMessage
+  createWelcomeMessage,
+  MAX_CHAT_HISTORY
 } from './feature/constants'
 import { createStorageApi } from './feature/storage'
 import { createSessionApi } from './feature/session'
@@ -329,9 +330,31 @@ export function useFeatureLogic() {
     showNewConversationConfirm.value = false
   }
 
-  const proceedStartNewConversation = () => {
+  const proceedStartNewConversation = (options = {}) => {
     showNewConversationConfirm.value = false
     sessionApi.startNewConversation()
+
+    const count = Number(options?.colorCount)
+    const colorCountValue = Math.max(1, Math.min(10, Number.isNaN(count) ? Number(colorCount.value) || 5 : count))
+    const seedColorsValue = Array.isArray(options?.seedColors) ? [...options.seedColors] : []
+
+    chatMessages.value.push({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      role: 'assistant',
+      type: 'seed-summary',
+      content: '',
+      payload: {
+        title: '新一轮配色已创建',
+        colorCount: colorCountValue,
+        seedColors: seedColorsValue
+      }
+    })
+
+    if (chatMessages.value.length > MAX_CHAT_HISTORY) {
+      chatMessages.value.splice(0, chatMessages.value.length - MAX_CHAT_HISTORY)
+    }
+
+    storageApi.saveChatMessagesToStorage()
   }
 
   const setNextSeedColors = (colors) => {

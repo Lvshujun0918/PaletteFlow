@@ -77,6 +77,10 @@
                       :colorblind-types="colorblindTypes"
                     />
                   </template>
+
+                  <template v-else-if="message.type === 'seed-summary'">
+                    <ChatSeedSummaryMessage :payload="message.payload" />
+                  </template>
                 </div>
               </div>
             </div>
@@ -252,6 +256,7 @@ import GlassButton from '../components/GlassButton.vue'
 import ChatPaletteMessage from '../components/ChatPaletteMessage.vue'
 import ChatContrastMessage from '../components/ChatContrastMessage.vue'
 import ChatColorblindMessage from '../components/ChatColorblindMessage.vue'
+import ChatSeedSummaryMessage from '../components/ChatSeedSummaryMessage.vue'
 import ColorPickerModal from '../components/ColorPickerModal.vue'
 import AppModal from '../components/AppModal.vue'
 import AppSettings from '../components/AppSettings.vue'
@@ -273,6 +278,7 @@ export default {
     ChatPaletteMessage,
     ChatContrastMessage,
     ChatColorblindMessage,
+    ChatSeedSummaryMessage,
     ColorPickerModal,
     Tooltip,
     ImageApplyModal,
@@ -332,7 +338,10 @@ export default {
       pendingSeedColors.value = [...seedColors]
       featureLogic.colorCount.value = pendingColorCount.value
       featureLogic.setNextSeedColors(seedColors)
-      featureLogic.proceedStartNewConversation()
+      featureLogic.proceedStartNewConversation({
+        colorCount: pendingColorCount.value,
+        seedColors
+      })
     }
 
     const openRestoreConfirm = (index) => {
