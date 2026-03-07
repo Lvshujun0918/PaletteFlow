@@ -5,11 +5,9 @@
     </template>
 
     <div class="new-chat-modal">
-      <p class="modal-desc">你确定要新建一个配色对话吗？</p>
-
       <div class="count-card">
         <div class="count-header">
-          <span class="count-label">配色数量</span>
+          <span class="count-label">颜色数量</span>
         </div>
         <div class="count-row">
           <button
@@ -33,7 +31,7 @@
       </div>
 
       <div class="preview-card">
-        <div class="preview-title">待配色预览（点击方框设置初始色）</div>
+        <div class="preview-title">配色预览（点击方框设置初始色）</div>
         <div class="preview-grid">
           <button
             v-for="n in previewBoxes"
