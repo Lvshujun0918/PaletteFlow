@@ -152,6 +152,12 @@ export function useFeatureWizard() {
       })
     }
 
+    const firstStepReady = await waitForElement('[data-tour="chat-start"]', 15000)
+    if (!firstStepReady) {
+      console.warn('[wizard] first step element not ready: [data-tour="chat-start"]')
+      return
+    }
+
     wizard = driver({
       showProgress: true,
       allowClose: true,
@@ -183,8 +189,13 @@ export function useFeatureWizard() {
                 return
               }
 
-              firstStepCompleted = true
-              wizard.moveNext()
+              waitForElement('[data-tour="chat-start"]', 5000).then((ready) => {
+                if (!ready || firstStepCompleted) return
+                const delayedButton = document.querySelector('[data-tour="chat-start"]')
+                if (delayedButton) {
+                  delayedButton.click()
+                }
+              })
             }
           }
         },
