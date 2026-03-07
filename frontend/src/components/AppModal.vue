@@ -1,17 +1,19 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click.self="handleOverlayClick">
-    <div class="modal-card" :class="variantClass">
-      <div v-if="$slots.header" class="modal-header">
-        <slot name="header" />
-      </div>
-      <div v-if="$slots.default" class="modal-body">
-        <slot />
-      </div>
-      <div v-if="$slots.actions" class="modal-actions">
-        <slot name="actions" />
+  <teleport to="body">
+    <div v-if="show" class="modal-overlay" @click.self="handleOverlayClick">
+      <div class="modal-card" :class="variantClass">
+        <div v-if="$slots.header" class="modal-header">
+          <slot name="header" />
+        </div>
+        <div v-if="$slots.default" class="modal-body">
+          <slot />
+        </div>
+        <div v-if="$slots.actions" class="modal-actions">
+          <slot name="actions" />
+        </div>
       </div>
     </div>
-  </div>
+  </teleport>
 </template>
 
 <script>
@@ -48,14 +50,17 @@ export default {
 
 <style scoped>
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  min-height: 100dvh;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
   z-index: 30;
 }
 
