@@ -4,7 +4,7 @@
       <h3 class="modal-title">新建配色对话</h3>
     </template>
 
-    <div class="new-chat-modal">
+    <div class="new-chat-modal" data-tour="new-chat-count">
       <div class="count-card">
         <div class="count-header">
           <span class="count-label">颜色数量</span>
@@ -30,7 +30,7 @@
         </div>
       </div>
 
-      <div class="preview-card">
+      <div class="preview-card" data-tour="new-chat-preview">
         <div class="preview-title">配色预览（点击方框设置初始色）</div>
         <div class="preview-grid">
           <button
@@ -60,7 +60,7 @@
 
     <template #actions>
       <GlassButton variant="secondary" @click="handleClose">取消</GlassButton>
-      <GlassButton variant="primary" @click="handleConfirm">确认新建</GlassButton>
+      <GlassButton variant="primary" data-tour="new-chat-confirm" @click="handleConfirm">确认新建</GlassButton>
     </template>
   </AppModal>
 </template>

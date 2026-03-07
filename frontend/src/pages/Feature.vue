@@ -11,12 +11,12 @@
             <p>配色，易如反掌</p>
           </div>
           <div class="header-actions">
-            <Tooltip text="新建对话" position="bottom">
-              <button class="header-action-btn" @click="confirmStartNewConversation">
+            <Tooltip text="新建对话" data-tour="new-chat" position="bottom">
+              <button class="header-action-btn" data-tour="new-chat-btn" @click="confirmStartNewConversation">
                 <IconPlus size="20" />
               </button>
             </Tooltip>
-            <Tooltip text="查看对话历史" position="bottom">
+            <Tooltip text="查看对话历史" data-tour="old-chat" position="bottom">
               <button class="header-action-btn" @click="handleShowHistory">
                 <IconHistory size="20" />
               </button>
@@ -102,17 +102,18 @@
                   <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('对比度检查')">对比度检查</GlassButton>
                   <GlassButton variant="chip" custom-class="tool-chip-btn" @click="sendQuickPrompt('色盲检查')">色盲检查</GlassButton>
                 </div>
-                <div class="send-actions" data-tour="send-actions">
+                <div class="send-actions">
                   <GlassButton
                     variant="primary"
                     class="send-btn"
                     :loading="loading"
                     :disabled="loading"
                     @click="handleSendPrompt"
+                    data-tour="send-actions"
                   >
                     <IconSend v-if="!loading" size="18" />发送
                   </GlassButton>
-                  <GlassButton class="inspiration-btn" :loading="loadingInspiration"
+                  <GlassButton data-tour="inspiration-action" class="inspiration-btn" :loading="loadingInspiration"
                     :disabled="loading || loadingInspiration" @click="handleInspirationSend">
                     <IconSparkles v-if="!loadingInspiration" size="18" />灵感
                   </GlassButton>

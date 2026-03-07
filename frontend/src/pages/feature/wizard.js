@@ -2,7 +2,7 @@ import { nextTick, onMounted } from 'vue'
 import { driver } from 'driver.js'
 import 'driver.js/dist/driver.css'
 
-const WIZARD_STORAGE_KEY = 'paletteflow_wizard_completed_v1'
+const WIZARD_STORAGE_KEY = 'paletteflow_wizard_completed_v3'
 
 export function isFeatureWizardCompleted() {
   return localStorage.getItem(WIZARD_STORAGE_KEY) === '1'
@@ -56,7 +56,7 @@ export function useFeatureWizard() {
     }
 
     const bindSendStepButton = () => {
-      const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+      const sendBtn = document.querySelector('[data-tour="send-actions"]')
       if (!sendBtn) return
 
       sendStepCompleted = false
@@ -89,7 +89,7 @@ export function useFeatureWizard() {
 
       return new Promise((resolve) => {
         const check = () => {
-          const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+          const sendBtn = document.querySelector('[data-tour="send-actions"]')
           const currentInputEl = document.querySelector('[data-tour="chat-input"]')
           const currentValue = currentInputEl ? (currentInputEl.value || '') : ''
           if (!sendBtn) {
@@ -133,6 +133,25 @@ export function useFeatureWizard() {
       })
     }
 
+    const waitForElement = (selector, timeoutMs = 5000) => {
+      const startedAt = Date.now()
+      return new Promise((resolve) => {
+        const check = () => {
+          const el = document.querySelector(selector)
+          if (el) {
+            resolve(true)
+            return
+          }
+          if (Date.now() - startedAt > timeoutMs) {
+            resolve(false)
+            return
+          }
+          setTimeout(check, 120)
+        }
+        check()
+      })
+    }
+
     wizard = driver({
       showProgress: true,
       allowClose: true,
@@ -147,11 +166,11 @@ export function useFeatureWizard() {
             if (detachFirstStepClick) detachFirstStepClick()
           },
           popover: {
-            title: '让我们开始',
-            description: '这是新建按钮，让我们创建一个新对话来开始配色之旅吧！',
+            title: '从新建开始',
+            description: '点击按钮，让我们开启便捷配色之旅吧！',
             side: 'top',
             align: 'start',
-            nextBtnText: '新建对话',
+            nextBtnText: '打开新建流程',
             onNextClick: () => {
               if (firstStepCompleted) {
                 wizard.moveNext()
@@ -170,19 +189,75 @@ export function useFeatureWizard() {
           }
         },
         {
-          element: '[data-tour="chat-header"]',
+          element: '[data-tour="new-chat-count"]',
           popover: {
-            title: '配色对话助手',
-            description: '这里是主工作区，你可以在此查看主题、输入需求并对配色结果进行持续调整。',
+            title: '新建配色',
+            description: '在新建配色中，你可以设置配色数量，并预览固定色。',
             side: 'bottom',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="new-chat-preview"]',
+          popover: {
+            title: '固定主色',
+            description: '点击预览格可设置固定色。已固定的颜色会在首轮生成中保持不变，并作为重点参考。',
+            side: 'bottom',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="new-chat-confirm"]',
+          popover: {
+            title: '确认并创建新一轮',
+            description: '确认后会创建新会话，并在聊天区自动生成“颜色数量 + 固定色预览”的助手摘要。',
+            side: 'top',
+            align: 'end',
+            nextBtnText: '确认并继续',
+            onNextClick: () => {
+              const confirmBtn = document.querySelector('[data-tour="new-chat-confirm"]')
+              if (confirmBtn) {
+                confirmBtn.click()
+              }
+
+              waitForElement('[data-tour="seed-summary"]', 6000).then(() => {
+                wizard.moveNext()
+              })
+            }
+          }
+        },
+        {
+          element: '[data-tour="new-chat"]',
+          popover: {
+            title: '新建配色对话',
+            description: '单击此处可随时新建配色对话，开启新的创作灵感！',
+            side: 'top',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="old-chat"]',
+          popover: {
+            title: '查看历史对话',
+            description: '单击此处可查看历史对话，查看更多历史配色。',
+            side: 'top',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="seed-summary"]',
+          popover: {
+            title: '查看摘要',
+            description: '此处显示本轮配色配置，方便你随时回看当前颜色数量和固定色。',
+            side: 'top',
             align: 'start'
           }
         },
         {
           element: '[data-tour="chat-input"]',
           popover: {
-            title: '输入你的需求',
-            description: '输入场景、风格或情绪描述，按 Ctrl+Enter 或点击发送。第一次发送会生成配色方案，之后可以微调颜色或数量。',
+            title: '输入本轮需求',
+            description: '描述场景、风格或情绪后发送，将会自动生成你想要的配色方案！',
             side: 'top',
             align: 'start',
             nextBtnText: '填入示例词',
@@ -193,20 +268,11 @@ export function useFeatureWizard() {
           }
         },
         {
-          element: '[data-tour="color-count"]',
+          element: '[data-tour="inspiration-action"]',
           popover: {
-            title: '选择颜色数量',
-            description: '支持 1 到 10 色，可先生成再精细调整。',
-            side: 'top',
-            align: 'start'
-          }
-        },
-        {
-          element: '[data-tour="action-row"]',
-          popover: {
-            title: '快捷短语',
-            description: '支持查看颜色的色盲适配情况和对比度，支持重新生成配色方案。',
-            side: 'top',
+            title: '灵感模式',
+            description: '如果一时想不到具体需求，可以点击“灵感”按钮获取一句古诗词，激发你的创作灵感！',
+            side: 'right',
             align: 'start'
           }
         },
@@ -219,8 +285,8 @@ export function useFeatureWizard() {
             if (detachSendStepClick) detachSendStepClick()
           },
           popover: {
-            title: '发送与灵感',
-            description: '点击发送按钮将使用你的配色需求生成配色方案。如果不清楚具体需求，点击灵感按钮将从古诗词中随机挑选一句发送！',
+            title: '发送生成首轮配色',
+            description: '点击发送后将基于你的需求生成配色结果，并保持已固定颜色不变。',
             side: 'top',
             align: 'start',
             nextBtnText: '发送并继续',
@@ -234,9 +300,16 @@ export function useFeatureWizard() {
                 return
               }
 
-              const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+              const sendBtn = document.querySelector('[data-tour="send-actions"]')
               if (sendBtn) {
                 sendBtn.click()
+                sendStepWaiting = true
+                waitForSendCompletion().then((completed) => {
+                  sendStepWaiting = false
+                  if (!completed || sendStepCompleted) return
+                  sendStepCompleted = true
+                  wizard.moveNext()
+                })
                 return
               }
 
@@ -253,26 +326,26 @@ export function useFeatureWizard() {
         {
           element: '[data-tour="result-panel"]',
           popover: {
-            title: '查看结果',
-            description: '右侧显示配色结果与建议，使用建议中的对应颜色点击可高亮显示。',
+            title: '查看生成结果',
+            description: '右侧面板展示当前配色、建议与时间信息，是后续迭代与导出的核心区域。',
             side: 'left',
             align: 'start'
           }
         },
         {
-          element: '[data-tour="color-actions"]',
+          element: '[data-tour="apply-image-btn"]',
           popover: {
-            title: '调整与复制',
-            description: '此处可使用AI或手动调整颜色，点击复制按钮可复制颜色代码。',
-            side: 'bottom',
-            align: 'start'
+            title: '一键套色到图片',
+            description: '上传图片后，当前配色方案将套用到图片上，并且可以有现实到艺术三挡风格可以选择，帮你快速预览配色效果！',
+            side: 'top',
+            align: 'end'
           }
         },
         {
           element: '[data-tour="color-actions"]',
           popover: {
-            title: '体验AI单色调整',
-            description: '现在自动选中第一种颜色进入AI单色调整模式。',
+            title: '体验单色修改',
+            description: '现在自动选中第一种颜色，进入 AI 单色修改模式。',
             side: 'bottom',
             align: 'start',
             nextBtnText: '选中第一个颜色',
@@ -287,7 +360,7 @@ export function useFeatureWizard() {
         {
           element: '[data-tour="chat-input"]',
           popover: {
-            title: '输入单色调整需求',
+            title: '输入单色需求',
             description: '向输入框自动填入“改成蓝色”，并提交演示请求。',
             side: 'top',
             align: 'start',
@@ -307,8 +380,8 @@ export function useFeatureWizard() {
             if (detachSendStepClick) detachSendStepClick()
           },
           popover: {
-            title: '提交单色调整',
-            description: '点击提交后，AI会根据需求调整配色方案中选中的颜色。',
+            title: '提交单色修改',
+            description: '点击发送后，AI 将仅针对选中颜色进行替换并更新整套配色。',
             side: 'top',
             align: 'start',
             nextBtnText: '发送并继续',
@@ -322,9 +395,16 @@ export function useFeatureWizard() {
                 return
               }
 
-              const sendBtn = document.querySelector('[data-tour="send-actions"] .send-btn')
+              const sendBtn = document.querySelector('[data-tour="send-actions"]')
               if (sendBtn) {
                 sendBtn.click()
+                sendStepWaiting = true
+                waitForSendCompletion().then((completed) => {
+                  sendStepWaiting = false
+                  if (!completed || sendStepCompleted) return
+                  sendStepCompleted = true
+                  wizard.moveNext()
+                })
                 return
               }
 
@@ -339,20 +419,11 @@ export function useFeatureWizard() {
           }
         },
         {
-          element: '[data-tour="result-panel"]',
-          popover: {
-            title: '查看单色调整结果',
-            description: '已完成AI单色调整演示，你可以继续手动编辑或再次发起微调。',
-            side: 'left',
-            align: 'start'
-          }
-        },
-        {
           element: '[data-tour="color-diff"]',
           popover: {
-            title: '显示详细颜色差异',
-            description: '通过HSL显示颜色差异，可方便地查看颜色前后变化。',
-            side: 'left',
+            title: '显示颜色差异',
+            description: '颜色修改将以HSL对比形式呈现，方便你对比修改前后的差异。',
+            side: 'bottom',
             align: 'start'
           }
         },
@@ -360,7 +431,7 @@ export function useFeatureWizard() {
           element: '[data-tour="settings-btn"]',
           popover: {
             title: '设置与数据管理',
-            description: '可在设置里查看存储与备份，保障创作数据安全。',
+            description: '可在设置里查看存储、备份与项目信息，保障创作数据安全。',
             side: 'bottom',
             align: 'end'
           }

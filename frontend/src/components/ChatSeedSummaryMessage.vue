@@ -1,5 +1,5 @@
 <template>
-  <div class="seed-summary">
+  <div class="seed-summary" data-tour="seed-summary">
     <div class="seed-title">{{ payload?.title || '新一轮配色配置已生效' }}</div>
     <div class="seed-meta">当前颜色数量：{{ safeColorCount }} 色</div>
     <div class="seed-grid">

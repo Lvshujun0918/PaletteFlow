@@ -83,7 +83,7 @@
       <GlassButton class="action-btn" variant="chip" @click="exportAsCSS">导出CSS</GlassButton>
       <GlassButton class="action-btn" variant="chip" @click="exportAsJSON">导出JSON</GlassButton>
       <GlassButton class="action-btn" variant="chip" @click="exportAsImage">导出图片</GlassButton>
-      <GlassButton class="action-btn" variant="primary" @click="$emit('apply-image')">应用到图片</GlassButton>
+      <GlassButton class="action-btn" variant="primary" data-tour="apply-image-btn" @click="$emit('apply-image')">应用到图片</GlassButton>
     </div>
   </div>
 </template>
