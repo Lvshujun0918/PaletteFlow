@@ -71,16 +71,28 @@ type PaletteResult struct {
 }
 
 // GenerateColorPalette 使用AI生成配色方案，支持3次重试
-func GenerateColorPalette(prompt string, colorCount int) (*PaletteResult, error) {
-	logging.Info("ai.generate.start", "generate palette called", logging.Fields{"color_count": colorCount, "prompt": prompt})
+func GenerateColorPalette(prompt string, colorCount int, seedColors []string) (*PaletteResult, error) {
+	logging.Info("ai.generate.start", "generate palette called", logging.Fields{"color_count": colorCount, "prompt": prompt, "seed_colors": seedColors})
 	if colorCount < 1 || colorCount > 10 {
 		logging.Warn("ai.generate.invalid_count", "colorCount out of range", logging.Fields{"color_count": colorCount})
 		return nil, fmt.Errorf("colorCount must be between 1 and 10")
 	}
 
+	normalizedSeeds, err := normalizeSeedColors(seedColors, colorCount)
+	if err != nil {
+		logging.Warn("ai.generate.invalid_seeds", "seed colors invalid", logging.Fields{"error": err.Error(), "seed_colors": seedColors})
+		return nil, err
+	}
+
 	systemPrompt := buildBaseSystemPrompt(colorCount)
-	userPrompt := fmt.Sprintf("请你帮我生成这样的配色：%s", prompt)
-	return retryGeneratePalette(systemPrompt, userPrompt, colorCount)
+	userPrompt := buildGenerateUserPrompt(prompt, normalizedSeeds)
+	result, genErr := retryGeneratePalette(systemPrompt, userPrompt, colorCount)
+	if genErr != nil {
+		return nil, genErr
+	}
+
+	result.Colors = applySeedColorLocks(result.Colors, normalizedSeeds)
+	return result, nil
 }
 
 // GeneratePaletteWithSingleColor 仅替换指定颜色，保持其他颜色不变
@@ -162,6 +174,64 @@ func RefinePalette(currentColors []string, prompt string, targetColorCount int) 
 	)
 
 	return retryGeneratePalette(systemPrompt, userPrompt, targetColorCount)
+}
+
+func buildGenerateUserPrompt(prompt string, seedColors []string) string {
+	seedHints := make([]string, 0)
+	for i, c := range seedColors {
+		if strings.TrimSpace(c) == "" {
+			continue
+		}
+		seedHints = append(seedHints, fmt.Sprintf("第%d位固定为%s", i+1, c))
+	}
+
+	if len(seedHints) == 0 {
+		return fmt.Sprintf("请你帮我生成这样的配色：%s", prompt)
+	}
+
+	return fmt.Sprintf(
+		"请你帮我生成这样的配色：%s。以下初始色为用户手动指定，必须在对应位置保持不变：%s。其余位置请围绕这些初始色生成协调方案，并重点参考这些初始色进行延展。",
+		prompt,
+		strings.Join(seedHints, "，"),
+	)
+}
+
+func normalizeSeedColors(seedColors []string, colorCount int) ([]string, error) {
+	normalized := make([]string, colorCount)
+	if len(seedColors) == 0 {
+		return normalized, nil
+	}
+	if len(seedColors) > colorCount {
+		return nil, fmt.Errorf("seedColors length exceeds color count")
+	}
+
+	for i := 0; i < len(seedColors); i++ {
+		candidate := strings.ToUpper(strings.TrimSpace(seedColors[i]))
+		if candidate == "" {
+			continue
+		}
+		if !strictHexRegex.MatchString(candidate) {
+			return nil, fmt.Errorf("invalid seed color at index %d", i)
+		}
+		normalized[i] = candidate
+	}
+
+	return normalized, nil
+}
+
+func applySeedColorLocks(colors []string, seedColors []string) []string {
+	if len(colors) == 0 || len(seedColors) == 0 {
+		return colors
+	}
+	locked := make([]string, len(colors))
+	copy(locked, colors)
+	for i := 0; i < len(locked) && i < len(seedColors); i++ {
+		if strings.TrimSpace(seedColors[i]) == "" {
+			continue
+		}
+		locked[i] = strings.ToUpper(strings.TrimSpace(seedColors[i]))
+	}
+	return locked
 }
 
 func retryGeneratePalette(systemPrompt, userPrompt string, colorCount int) (*PaletteResult, error) {

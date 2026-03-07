@@ -15,8 +15,9 @@ import (
 )
 
 type ColorPaletteRequest struct {
-	Prompt     string `json:"prompt" binding:"required"`
-	ColorCount int    `json:"color_count"`
+	Prompt     string   `json:"prompt" binding:"required"`
+	ColorCount int      `json:"color_count"`
+	SeedColors []string `json:"seed_colors"`
 }
 
 type SingleColorRequest struct {
@@ -62,6 +63,15 @@ func GeneratePaletteHandler(c *gin.Context) {
 		return
 	}
 
+	seedColors, err := normalizeSeedColors(req.SeedColors, colorCount)
+	if err != nil {
+		logging.Warn("palette.generate.invalid_seed_colors", "seed colors invalid", logging.Fields{"request_id": requestID, "error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	logging.Info("palette.generate.seed_colors", "seed colors received", logging.Fields{"request_id": requestID, "seed_colors": seedColors})
+
 	normalizedPrompt := strings.TrimSpace(req.Prompt)
 	if normalizedPrompt == "森林配色" {
 		logging.Info("palette.generate.demo_forest", "forest preset matched", logging.Fields{"request_id": requestID})
@@ -91,7 +101,7 @@ func GeneratePaletteHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	result, err := ai.GenerateColorPalette(req.Prompt, colorCount)
+	result, err := ai.GenerateColorPalette(req.Prompt, colorCount, seedColors)
 	if err != nil {
 		logging.Error("palette.generate.ai_failed", "ai generation failed, fallback random", logging.Fields{"request_id": requestID, "error": err.Error()})
 		// 降级到随机生成
@@ -101,6 +111,8 @@ func GeneratePaletteHandler(c *gin.Context) {
 			Advice: "由于网络原因，AI调用失败。本次为随机生成配色，可作为灵感草案使用。建议在主色与辅色之间调整明度对比以提升层次感。",
 		}
 	}
+
+	result.Colors = applySeedColorLocks(result.Colors, seedColors)
 
 	logging.Info("palette.generate.success", "generate palette completed", logging.Fields{"request_id": requestID, "color_count": len(result.Colors)})
 
@@ -252,4 +264,48 @@ func generateRandomColors(count int, seed string) []string {
 	}
 
 	return colors
+}
+
+func normalizeSeedColors(seedColors []string, colorCount int) ([]string, error) {
+	if colorCount < 1 || colorCount > 10 {
+		return nil, fmt.Errorf("color_count must be between 1 and 10")
+	}
+
+	normalized := make([]string, colorCount)
+	if len(seedColors) == 0 {
+		return normalized, nil
+	}
+	if len(seedColors) > colorCount {
+		return nil, fmt.Errorf("seed_colors must not exceed color_count")
+	}
+
+	hexRe := regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+	for i := 0; i < len(seedColors); i++ {
+		candidate := strings.TrimSpace(seedColors[i])
+		if candidate == "" {
+			continue
+		}
+		candidate = strings.ToUpper(candidate)
+		if !hexRe.MatchString(candidate) {
+			return nil, fmt.Errorf("invalid seed color at index %d", i)
+		}
+		normalized[i] = candidate
+	}
+
+	return normalized, nil
+}
+
+func applySeedColorLocks(colors []string, seedColors []string) []string {
+	if len(colors) == 0 || len(seedColors) == 0 {
+		return colors
+	}
+	locked := make([]string, len(colors))
+	copy(locked, colors)
+	for i := 0; i < len(locked) && i < len(seedColors); i++ {
+		if strings.TrimSpace(seedColors[i]) == "" {
+			continue
+		}
+		locked[i] = strings.ToUpper(strings.TrimSpace(seedColors[i]))
+	}
+	return locked
 }

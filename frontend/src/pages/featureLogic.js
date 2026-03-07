@@ -24,6 +24,7 @@ export function useFeatureLogic() {
   const currentSessionId = ref(null)
   const currentSessionTheme = ref('')
   const colorCount = ref(5)
+  const nextSeedColors = ref([])
   const histories = ref([])
   const chatInput = ref('')
   const chatMessages = ref([createWelcomeMessage()])
@@ -121,7 +122,7 @@ export function useFeatureLogic() {
     currentSessionId,
     currentSessionTheme,
     colorCount,
-    colorCount,
+    nextSeedColors,
     histories,
     chatInput,
     chatMessages,
@@ -328,6 +329,10 @@ export function useFeatureLogic() {
     sessionApi.startNewConversation()
   }
 
+  const setNextSeedColors = (colors) => {
+    nextSeedColors.value = Array.isArray(colors) ? [...colors] : []
+  }
+
   return {
     loading,
     showSessionChoice,
@@ -350,6 +355,7 @@ export function useFeatureLogic() {
     currentAdvice,
     currentSessionTheme,
     colorCount,
+    nextSeedColors,
     histories,
     chatInput,
     chatMessages,
@@ -380,6 +386,7 @@ export function useFeatureLogic() {
     handleColorPickerConfirm: actionsApi.handleColorPickerConfirm,
     formatTime: sessionApi.formatTime,
     handleLogoError,
-    notify
+    notify,
+    setNextSeedColors
   }
 }

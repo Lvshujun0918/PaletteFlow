@@ -33,15 +33,29 @@
       </div>
 
       <div class="preview-card">
-        <div class="preview-title">待配色预览</div>
+        <div class="preview-title">待配色预览（点击方框设置初始色）</div>
         <div class="preview-grid">
-          <span
+          <button
             v-for="n in previewBoxes"
             :key="`preview-color-${n}`"
+            type="button"
             class="preview-box"
-            :style="{ opacity: Math.max(0.45, 1 - (n - 1) * 0.05) }"
-          ></span>
+            :class="{ active: !!seedColors[n - 1] }"
+            :style="previewBoxStyle(n - 1, n)"
+            @click="focusColorInput(n - 1)"
+            :title="seedColors[n - 1] || '点击设置初始色'"
+          >
+            <input
+              :ref="setColorInputRef(n - 1)"
+              class="preview-color-input"
+              type="color"
+              :value="seedColors[n - 1] || '#94a3b8'"
+              @input="setSeedColor(n - 1, $event)"
+            />
+            <span class="preview-index">{{ n }}</span>
+          </button>
         </div>
+        <p class="preview-hint">已设置的初始色会在首轮生成时保持不变，并被重点参考。</p>
       </div>
     </div>
 
@@ -77,17 +91,37 @@ export default {
     initialColorCount: {
       type: Number,
       default: 5
+    },
+    initialSeedColors: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['close', 'confirm'],
   setup(props, { emit }) {
     const localColorCount = ref(clampColorCount(props.initialColorCount))
+    const seedColors = ref([])
+    const colorInputRefs = ref([])
+
+    const normalizeSeedColors = (count, source = []) => {
+      const next = []
+      for (let i = 0; i < count; i += 1) {
+        const raw = source[i]
+        if (typeof raw === 'string' && /^#[0-9A-Fa-f]{6}$/.test(raw.trim())) {
+          next.push(raw.trim().toUpperCase())
+        } else {
+          next.push('')
+        }
+      }
+      return next
+    }
 
     watch(
       () => props.show,
       (visible) => {
         if (visible) {
           localColorCount.value = clampColorCount(props.initialColorCount)
+          seedColors.value = normalizeSeedColors(localColorCount.value, props.initialSeedColors)
         }
       }
     )
@@ -97,9 +131,26 @@ export default {
       (value) => {
         if (!props.show) {
           localColorCount.value = clampColorCount(value)
+          seedColors.value = normalizeSeedColors(localColorCount.value, props.initialSeedColors)
         }
       }
     )
+
+    watch(
+      () => props.initialSeedColors,
+      (value) => {
+        if (!props.show) {
+          seedColors.value = normalizeSeedColors(localColorCount.value, value)
+        }
+      },
+      { deep: true }
+    )
+
+    watch(localColorCount, (nextCount, prevCount) => {
+      if (nextCount === prevCount) return
+      seedColors.value = normalizeSeedColors(nextCount, seedColors.value)
+      colorInputRefs.value = colorInputRefs.value.slice(0, nextCount)
+    })
 
     const previewBoxes = computed(() => Array.from({ length: localColorCount.value }, (_, i) => i + 1))
 
@@ -107,18 +158,56 @@ export default {
       localColorCount.value = clampColorCount(localColorCount.value + delta)
     }
 
+    const setColorInputRef = (index) => (el) => {
+      colorInputRefs.value[index] = el || null
+    }
+
+    const focusColorInput = (index) => {
+      const input = colorInputRefs.value[index]
+      if (!input) return
+      input.click()
+    }
+
+    const setSeedColor = (index, event) => {
+      const value = String(event?.target?.value || '').trim().toUpperCase()
+      if (!/^#[0-9A-F]{6}$/.test(value)) return
+      seedColors.value[index] = value
+    }
+
+    const previewBoxStyle = (index, order) => {
+      const selected = seedColors.value[index]
+      if (selected) {
+        return {
+          background: selected,
+          borderColor: 'rgba(15, 23, 42, 0.28)',
+          opacity: 1
+        }
+      }
+      return {
+        opacity: Math.max(0.42, 1 - order * 0.05)
+      }
+    }
+
     const handleClose = () => {
       emit('close')
     }
 
     const handleConfirm = () => {
-      emit('confirm', localColorCount.value)
+      emit('confirm', {
+        colorCount: localColorCount.value,
+        seedColors: [...seedColors.value]
+      })
     }
 
     return {
       localColorCount,
       previewBoxes,
+      seedColors,
       changeCount,
+      setColorInputRef,
+      focusColorInput,
+      setSeedColor,
+      previewBoxStyle,
       handleClose,
       handleConfirm
     }
@@ -226,10 +315,49 @@ export default {
 }
 
 .preview-box {
+  position: relative;
+  overflow: hidden;
   height: 36px;
   width: 36px;
   border-radius: 7px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: linear-gradient(135deg, rgba(226, 232, 240, 0.9), rgba(203, 213, 225, 0.8));
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.preview-box:hover {
+  transform: translateY(-1px);
+}
+
+.preview-box.active {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+}
+
+.preview-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.preview-index {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(15, 23, 42, 0.72);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  padding: 1px 4px;
+}
+
+.preview-hint {
+  margin: 8px 0 0;
+  font-size: 0.76rem;
+  color: #64748b;
 }
 </style>

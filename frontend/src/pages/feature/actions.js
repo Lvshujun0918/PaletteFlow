@@ -24,6 +24,7 @@ export function createActionsApi(deps) {
     currentSessionId,
     currentSessionTheme,
     colorCount,
+    nextSeedColors,
     histories,
     chatInput,
     chatMessages,
@@ -136,21 +137,24 @@ export function createActionsApi(deps) {
 
   const handleGenerate = async (prompt, options = {}) => {
     loading.value = true
+    let isRefinement = false
     try {
       let response
       const mode = options?.mode || 'auto'
       const canRefine = currentSessionId.value && currentColors.value.length > 0
-      const isRefinement = mode === 'refine' ? canRefine : (mode === 'generate' ? false : canRefine)
+      isRefinement = mode === 'refine' ? canRefine : (mode === 'generate' ? false : canRefine)
 
       if (isRefinement) {
         response = await refinePalette(currentColors.value, prompt, colorCount.value)
         currentPrompt.value = prompt
       } else {
-        response = await generatePalette(prompt, colorCount.value)
+        const seedColors = Array.isArray(nextSeedColors.value) ? [...nextSeedColors.value] : []
+        response = await generatePalette(prompt, colorCount.value, { seedColors })
         const newId = Date.now()
         currentSessionId.value = newId
         currentSessionTheme.value = prompt
         currentPrompt.value = prompt
+        nextSeedColors.value = []
 
         const newSession = {
           id: newId,
@@ -213,7 +217,8 @@ export function createActionsApi(deps) {
         retryPrompt: prompt,
         retryContext: {
           type: isRefinement ? 'refine' : 'generate',
-          prompt
+          prompt,
+          seedColors: !isRefinement && Array.isArray(nextSeedColors.value) ? [...nextSeedColors.value] : []
         }
       })
     } finally {
@@ -342,6 +347,9 @@ export function createActionsApi(deps) {
     }
 
     const mode = retryContext?.type === 'refine' ? 'refine' : 'generate'
+    if (mode === 'generate' && Array.isArray(retryContext?.seedColors)) {
+      nextSeedColors.value = [...retryContext.seedColors]
+    }
     handleGenerate(retryPrompt, { mode })
   }
 

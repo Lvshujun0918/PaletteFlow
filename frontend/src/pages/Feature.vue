@@ -176,6 +176,7 @@
       <NewConversationModal
         :show="showNewConversationConfirm"
         :initial-color-count="pendingColorCount"
+        :initial-seed-colors="pendingSeedColors"
         @close="cancelStartNewConversation"
         @confirm="handleConfirmNewConversation"
       />
@@ -289,6 +290,7 @@ export default {
     const loadingInspiration = ref(false)
     const showImageApplyModal = ref(false)
     const pendingColorCount = ref(Number(featureLogic.colorCount.value) || 5)
+    const pendingSeedColors = ref([])
     const showRestoreConfirm = ref(false)
     const pendingRestoreIndex = ref(-1)
     const showSettingsModal = ref(false)
@@ -313,6 +315,9 @@ export default {
 
     const confirmStartNewConversation = () => {
       pendingColorCount.value = Math.max(1, Math.min(10, Number(featureLogic.colorCount.value) || 5))
+      pendingSeedColors.value = Array.isArray(featureLogic.nextSeedColors?.value)
+        ? [...featureLogic.nextSeedColors.value]
+        : []
       featureLogic.confirmStartNewConversation()
     }
 
@@ -320,9 +325,13 @@ export default {
       featureLogic.cancelStartNewConversation()
     }
 
-    const handleConfirmNewConversation = (count) => {
-      pendingColorCount.value = Math.max(1, Math.min(10, Number(count) || 5))
+    const handleConfirmNewConversation = (payload) => {
+      const count = Number(payload?.colorCount)
+      pendingColorCount.value = Math.max(1, Math.min(10, Number.isNaN(count) ? 5 : count))
+      const seedColors = Array.isArray(payload?.seedColors) ? payload.seedColors : []
+      pendingSeedColors.value = [...seedColors]
       featureLogic.colorCount.value = pendingColorCount.value
+      featureLogic.setNextSeedColors(seedColors)
       featureLogic.proceedStartNewConversation()
     }
 
@@ -478,6 +487,7 @@ export default {
       openImageApplyModal,
       closeImageApplyModal,
       pendingColorCount,
+      pendingSeedColors,
       confirmStartNewConversation,
       cancelStartNewConversation,
       handleConfirmNewConversation,
