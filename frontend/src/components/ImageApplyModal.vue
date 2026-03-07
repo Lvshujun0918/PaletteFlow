@@ -48,11 +48,6 @@
               />
               <span class="edge-label">现实</span>
             </div>
-            <div class="stops-row">
-              <span>LAB最近邻</span>
-              <span>软混合</span>
-              <span>保留亮度</span>
-            </div>
           </div>
 
           <div v-if="taskId" class="progress-row">
@@ -424,13 +419,6 @@ export default {
 
 .mode-slider {
   flex: 1;
-}
-
-.stops-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: #64748b;
 }
 
 .progress-row {
