@@ -42,21 +42,22 @@
             class="preview-box"
             :class="{ active: !!seedColors[n - 1] }"
             :style="previewBoxStyle(n - 1, n)"
-            @click="focusColorInput(n - 1)"
+            @click="openColorPicker(n - 1)"
             :title="seedColors[n - 1] || '点击设置初始色'"
           >
-            <input
-              :ref="setColorInputRef(n - 1)"
-              class="preview-color-input"
-              type="color"
-              :value="seedColors[n - 1] || '#94a3b8'"
-              @input="setSeedColor(n - 1, $event)"
-            />
             <span class="preview-index">{{ n }}</span>
           </button>
         </div>
         <p class="preview-hint">已设置的初始色会在首轮生成时保持不变，并被重点参考。</p>
       </div>
+
+      <ColorPickerModal
+        :visible="isColorPickerVisible"
+        :model-value="pickerColor"
+        @update:visible="isColorPickerVisible = $event"
+        @update:modelValue="pickerColor = normalizeHexColor($event)"
+        @confirm="handlePickerConfirm"
+      />
     </div>
 
     <template #actions>
@@ -69,6 +70,7 @@
 <script>
 import { computed, ref, watch } from 'vue'
 import AppModal from './AppModal.vue'
+import ColorPickerModal from './ColorPickerModal.vue'
 import GlassButton from './GlassButton.vue'
 
 const clampColorCount = (value) => {
@@ -81,6 +83,7 @@ export default {
   name: 'NewConversationModal',
   components: {
     AppModal,
+    ColorPickerModal,
     GlassButton
   },
   props: {
@@ -101,7 +104,15 @@ export default {
   setup(props, { emit }) {
     const localColorCount = ref(clampColorCount(props.initialColorCount))
     const seedColors = ref([])
-    const colorInputRefs = ref([])
+    const isColorPickerVisible = ref(false)
+    const pickerColor = ref('#94A3B8')
+    const pickerTargetIndex = ref(-1)
+
+    const normalizeHexColor = (value) => {
+      const hex = String(value || '').trim().toUpperCase()
+      if (/^#[0-9A-F]{6}$/.test(hex)) return hex
+      return '#94A3B8'
+    }
 
     const normalizeSeedColors = (count, source = []) => {
       const next = []
@@ -149,7 +160,6 @@ export default {
     watch(localColorCount, (nextCount, prevCount) => {
       if (nextCount === prevCount) return
       seedColors.value = normalizeSeedColors(nextCount, seedColors.value)
-      colorInputRefs.value = colorInputRefs.value.slice(0, nextCount)
     })
 
     const previewBoxes = computed(() => Array.from({ length: localColorCount.value }, (_, i) => i + 1))
@@ -158,20 +168,20 @@ export default {
       localColorCount.value = clampColorCount(localColorCount.value + delta)
     }
 
-    const setColorInputRef = (index) => (el) => {
-      colorInputRefs.value[index] = el || null
+    const openColorPicker = (index) => {
+      pickerTargetIndex.value = index
+      pickerColor.value = normalizeHexColor(seedColors.value[index])
+      isColorPickerVisible.value = true
     }
 
-    const focusColorInput = (index) => {
-      const input = colorInputRefs.value[index]
-      if (!input) return
-      input.click()
-    }
-
-    const setSeedColor = (index, event) => {
-      const value = String(event?.target?.value || '').trim().toUpperCase()
-      if (!/^#[0-9A-F]{6}$/.test(value)) return
+    const setSeedColor = (index, color) => {
+      const value = normalizeHexColor(color)
       seedColors.value[index] = value
+    }
+
+    const handlePickerConfirm = (color) => {
+      if (pickerTargetIndex.value < 0 || pickerTargetIndex.value >= localColorCount.value) return
+      setSeedColor(pickerTargetIndex.value, color)
     }
 
     const previewBoxStyle = (index, order) => {
@@ -203,10 +213,13 @@ export default {
       localColorCount,
       previewBoxes,
       seedColors,
+      isColorPickerVisible,
+      pickerColor,
       changeCount,
-      setColorInputRef,
-      focusColorInput,
+      openColorPicker,
       setSeedColor,
+      normalizeHexColor,
+      handlePickerConfirm,
       previewBoxStyle,
       handleClose,
       handleConfirm
@@ -332,15 +345,6 @@ export default {
 
 .preview-box.active {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
-}
-
-.preview-color-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .preview-index {
