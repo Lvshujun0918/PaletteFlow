@@ -9,3 +9,4 @@
 **/*.log
 .git
 docker-compose.yml
+**/asset
