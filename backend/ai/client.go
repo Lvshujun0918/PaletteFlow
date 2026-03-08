@@ -29,12 +29,13 @@ type ChatMessage struct {
 }
 
 type ChatRequest struct {
-	Model       string           `json:"model"`
-	Messages    []ChatMessage    `json:"messages"`
-	Temperature float64          `json:"temperature,omitempty"`
-	MaxTokens   int              `json:"max_tokens,omitempty"`
-	Tools       []ToolDefinition `json:"tools,omitempty"`
-	ToolChoice  interface{}      `json:"tool_choice,omitempty"`
+	Model          string           `json:"model"`
+	Messages       []ChatMessage    `json:"messages"`
+	EnableThinking bool             `json:"enable_thinking"`
+	Temperature    float64          `json:"temperature,omitempty"`
+	MaxTokens      int              `json:"max_tokens,omitempty"`
+	Tools          []ToolDefinition `json:"tools,omitempty"`
+	ToolChoice     interface{}      `json:"tool_choice,omitempty"`
 }
 
 type ChatResponse struct {
@@ -275,10 +276,11 @@ func attemptGenerateWithPrompt(systemPrompt, userPrompt string, colorCount int) 
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
 		},
-		Temperature: 0.7,
-		MaxTokens:   200,
-		Tools:       []ToolDefinition{paletteTool},
-		ToolChoice:  toolChoice,
+		EnableThinking: false,
+		Temperature:    0.7,
+		MaxTokens:      200,
+		Tools:          []ToolDefinition{paletteTool},
+		ToolChoice:     toolChoice,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
