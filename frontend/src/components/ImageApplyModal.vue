@@ -95,7 +95,6 @@ import AppModal from './AppModal.vue'
 import GlassButton from './GlassButton.vue'
 import {
   createImagePaletteTask,
-  downloadImagePaletteTaskResult,
   getImagePaletteTask
 } from '../utils/api'
 import { notify } from '../utils/notify'
@@ -143,10 +142,10 @@ export default {
         URL.revokeObjectURL(sourceUrl.value)
         sourceUrl.value = ''
       }
-      if (resultUrl.value) {
+      if (resultUrl.value && resultUrl.value.startsWith('blob:')) {
         URL.revokeObjectURL(resultUrl.value)
-        resultUrl.value = ''
       }
+      resultUrl.value = ''
     }
 
     const resetState = () => {
@@ -265,16 +264,7 @@ export default {
           return
         }
 
-        const resultResp = await downloadImagePaletteTaskResult(id)
-        const blob = resultResp?.data
-        if (!blob) {
-          throw new Error('empty image response')
-        }
-
-        if (resultUrl.value) {
-          URL.revokeObjectURL(resultUrl.value)
-        }
-        resultUrl.value = URL.createObjectURL(blob)
+        resultUrl.value = `/api/apply-image-palette/task/${id}/result?t=${Date.now()}`
         notify('图片套色完成', 'success')
       } catch (error) {
         statusText.value = '处理失败'
@@ -290,6 +280,7 @@ export default {
       const link = document.createElement('a')
       link.href = resultUrl.value
       link.download = `${filename}_palette.png`
+      link.rel = 'noopener'
       link.click()
     }
 
