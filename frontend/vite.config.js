@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import viteCompression from 'vite-plugin-compression'
-import viteImagemin from 'vite-plugin-imagemin'
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
@@ -11,34 +10,6 @@ export default defineConfig(({ mode }) => {
       vue(),
       ...(isProd
         ? [
-            viteImagemin({
-              gifsicle: {
-                optimizationLevel: 7,
-                interlaced: false
-              },
-              mozjpeg: {
-                quality: 78
-              },
-              pngquant: {
-                quality: [0.7, 0.85],
-                speed: 4
-              },
-              svgo: {
-                plugins: [
-                  {
-                    name: 'removeViewBox',
-                    active: false
-                  },
-                  {
-                    name: 'removeEmptyAttrs',
-                    active: true
-                  }
-                ]
-              },
-              webp: {
-                quality: 78
-              }
-            }),
             viteCompression({
               verbose: false,
               threshold: 1024,
