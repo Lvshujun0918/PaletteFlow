@@ -48,6 +48,27 @@ export function createActionsApi(deps) {
     clearSingleColorMode
   } = deps
 
+  const resolveErrorMessage = (error, fallback = '操作失败，请稍后再试。') => {
+    const backendMessage = error?.response?.data?.error
+    if (typeof backendMessage === 'string' && backendMessage.trim()) {
+      return backendMessage.trim()
+    }
+
+    if (error?.code === 'ECONNABORTED') {
+      return '请求超时，已自动重试，请稍后再试。'
+    }
+
+    if (!error?.response && error?.message) {
+      return '网络连接不稳定，请检查网络后重试。'
+    }
+
+    if (typeof error?.message === 'string' && error.message.trim()) {
+      return error.message.trim()
+    }
+
+    return fallback
+  }
+
   const scrollChatToLatest = async (smooth = true) => {
     await nextTick()
     const chatList = document.querySelector('.chat-messages')
@@ -136,10 +157,15 @@ export function createActionsApi(deps) {
   }
 
   const handleGenerate = async (prompt, options = {}) => {
+    if (loading.value || loadingSingle.value) {
+      notify('正在处理中，请稍候', 'info')
+      return
+    }
+
     loading.value = true
     let isRefinement = false
+    let response
     try {
-      let response
       const mode = options?.mode || 'auto'
       const canRefine = currentSessionId.value && currentColors.value.length > 0
       isRefinement = mode === 'refine' ? canRefine : (mode === 'generate' ? false : canRefine)
@@ -170,50 +196,61 @@ export function createActionsApi(deps) {
         router.replace(`/feature/${newId}`)
       }
 
+      const resultColors = Array.isArray(response?.data?.colors) ? response.data.colors : []
+      if (resultColors.length === 0) {
+        throw new Error('服务返回的配色结果为空')
+      }
+
       // 保存当前配色为 previousColors（在更新前）
       previousColors.value = [...currentColors.value]
 
-      currentColors.value = response.data.colors
-      currentTimestamp.value = response.data.timestamp * 1000
+      currentColors.value = resultColors
+      currentTimestamp.value = Number(response?.data?.timestamp || Date.now()) * 1000
       currentAdvice.value = response.data.advice || ''
-
-      const newHistory = {
-        id: currentSessionId.value,
-        prompt: currentSessionTheme.value,
-        currentPrompt: currentPrompt.value,
-        colors: response.data.colors,
-        timestamp: response.data.timestamp,
-        advice: response.data.advice || ''
-      }
-
-      if (isRefinement) {
-        const index = histories.value.findIndex((history) => history.id === currentSessionId.value)
-        if (index !== -1) {
-          histories.value[index] = newHistory
-        } else {
-          histories.value.unshift(newHistory)
-        }
-      } else {
-        histories.value.unshift(newHistory)
-      }
-
-      if (histories.value.length > MAX_HISTORY) {
-        histories.value.pop()
-      }
-
-      saveHistoriesToStorage()
 
       notify('配色生成成功！', 'success')
       addChatMessage('assistant', 'palette', '', {
         title: isRefinement ? '已修改配色' : '已生成配色',
-        colors: response.data.colors,
+        colors: resultColors,
         prompt,
         advice: response.data.advice || ''
       })
+
+      try {
+        const newHistory = {
+          id: currentSessionId.value,
+          prompt: currentSessionTheme.value,
+          currentPrompt: currentPrompt.value,
+          colors: resultColors,
+          timestamp: response.data.timestamp,
+          advice: response.data.advice || ''
+        }
+
+        if (isRefinement) {
+          const index = histories.value.findIndex((history) => history.id === currentSessionId.value)
+          if (index !== -1) {
+            histories.value[index] = newHistory
+          } else {
+            histories.value.unshift(newHistory)
+          }
+        } else {
+          histories.value.unshift(newHistory)
+        }
+
+        if (histories.value.length > MAX_HISTORY) {
+          histories.value.pop()
+        }
+
+        saveHistoriesToStorage()
+      } catch (postError) {
+        console.error('生成成功，但本地持久化失败:', postError)
+        notify('配色已生成，但本地保存失败，可继续使用。', 'warning')
+      }
     } catch (error) {
       console.error('生成配色失败:', error)
-      notify('生成配色失败，请重试', 'error')
-      addChatMessage('assistant', 'text', '生成失败了，请稍后再试。', {
+      const errorMessage = resolveErrorMessage(error, '生成配色失败，请重试')
+      notify(errorMessage, 'error')
+      addChatMessage('assistant', 'text', `生成失败了：${errorMessage}`, {
         retryPrompt: prompt,
         retryContext: {
           type: isRefinement ? 'refine' : 'generate',
@@ -238,6 +275,11 @@ export function createActionsApi(deps) {
   }
 
   const handleSingleColorRegenerate = async () => {
+    if (loading.value || loadingSingle.value) {
+      notify('正在处理中，请稍候', 'info')
+      return
+    }
+
     if (!singleColorHex.value) {
       notify('请先从左侧选择需要替换的颜色', 'warning')
       return
@@ -275,48 +317,59 @@ export function createActionsApi(deps) {
         target_index: targetIdx
       }
       const response = await regenerateSingleColor(payload)
+      const resultColors = Array.isArray(response?.data?.colors) ? response.data.colors : []
+      if (resultColors.length === 0) {
+        throw new Error('服务返回的配色结果为空')
+      }
 
       // 保存当前配色为 previousColors（在更新前）
       previousColors.value = [...currentColors.value]
 
-      currentColors.value = response.data.colors
+      currentColors.value = resultColors
       currentPrompt.value = payload.prompt
-      currentTimestamp.value = response.data.timestamp * 1000
+      currentTimestamp.value = Number(response?.data?.timestamp || Date.now()) * 1000
       currentAdvice.value = response.data.advice || ''
-
-      const newHistory = {
-        id: currentSessionId.value,
-        prompt: currentSessionTheme.value,
-        currentPrompt: currentPrompt.value,
-        colors: response.data.colors,
-        timestamp: response.data.timestamp,
-        advice: response.data.advice || ''
-      }
-
-      const index = histories.value.findIndex((history) => history.id === currentSessionId.value)
-      if (index !== -1) {
-        histories.value[index] = newHistory
-      } else {
-        histories.value.unshift(newHistory)
-      }
-
-      if (histories.value.length > MAX_HISTORY) {
-        histories.value.pop()
-      }
-      saveHistoriesToStorage()
 
       addChatMessage('assistant', 'palette', '', {
         title: '已修改配色',
-        colors: response.data.colors,
+        colors: resultColors,
         prompt: currentPrompt.value,
         advice: response.data.advice || ''
       })
       notify('已重生成指定颜色并更新整套配色', 'success')
+
+      try {
+        const newHistory = {
+          id: currentSessionId.value,
+          prompt: currentSessionTheme.value,
+          currentPrompt: currentPrompt.value,
+          colors: resultColors,
+          timestamp: response.data.timestamp,
+          advice: response.data.advice || ''
+        }
+
+        const index = histories.value.findIndex((history) => history.id === currentSessionId.value)
+        if (index !== -1) {
+          histories.value[index] = newHistory
+        } else {
+          histories.value.unshift(newHistory)
+        }
+
+        if (histories.value.length > MAX_HISTORY) {
+          histories.value.pop()
+        }
+        saveHistoriesToStorage()
+      } catch (postError) {
+        console.error('单色修改成功，但本地持久化失败:', postError)
+        notify('颜色已更新，但本地保存失败，可继续使用。', 'warning')
+      }
+
       clearSingleColorMode()
     } catch (error) {
       console.error('单色重生成失败:', error)
-      notify('单色重生成失败，请重试', 'error')
-      addChatMessage('assistant', 'text', '生成失败了，请稍后再试。', {
+      const errorMessage = resolveErrorMessage(error, '单色重生成失败，请重试')
+      notify(errorMessage, 'error')
+      addChatMessage('assistant', 'text', `生成失败了：${errorMessage}`, {
         retryContext: {
           type: 'single'
         }
@@ -336,7 +389,6 @@ export function createActionsApi(deps) {
     }
 
     if (retryContext?.type === 'single') {
-      loading.value = true
       handleSingleColorRegenerate()
       return
     }
@@ -492,10 +544,14 @@ export function createActionsApi(deps) {
   }
 
   const processPrompt = (prompt) => {
+    if (loading.value || loadingSingle.value) {
+      notify('正在处理中，请稍候', 'info')
+      return
+    }
+
     if (singleColorMode.value && singleColorHex.value) {
       addChatMessage('user', 'text', prompt)
       singleColorPrompt.value = prompt
-      loading.value = true
       handleSingleColorRegenerate()
       return
     }
