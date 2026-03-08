@@ -112,14 +112,20 @@ export const createImagePaletteTask = (file, colors, mode = 'preserve_luma') => 
 
 // 查询图片套色任务状态
 export const getImagePaletteTask = (taskId) => {
-  return apiClient.get(`/apply-image-palette/task/${taskId}`)
+  return apiClient.get(`/apply-image-palette/task/${taskId}`, {
+    timeout: 60000
+  })
 }
 
 // 下载图片套色任务结果
 export const downloadImagePaletteTaskResult = (taskId) => {
-  return apiClient.get(`/apply-image-palette/task/${taskId}/result`, {
-    responseType: 'blob'
-  })
+  return requestWithRetry(
+    () => apiClient.get(`/apply-image-palette/task/${taskId}/result`, {
+      responseType: 'blob',
+      timeout: 0
+    }),
+    { retries: 2, baseDelay: 700 }
+  )
 }
 
 export default apiClient
