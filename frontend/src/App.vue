@@ -65,12 +65,6 @@
 </template>
 
 <script>
-import bg6 from './assets/bg6.png'
-import bg1 from './assets/bg1.png'
-import bg2 from './assets/bg2.png'
-import bg3 from './assets/bg3.png'
-import bg4 from './assets/bg4.png'
-import bg5 from './assets/bg5.png'
 import logo from './assets/logo0.png'
 import GlassButton from './components/GlassButton.vue'
 
@@ -82,14 +76,8 @@ export default {
   data() {
     return {
 
-      backgroundImages: [
-        bg6,
-        bg1,
-        bg2,
-        bg3,
-        bg4,
-        bg5
-      ],
+      backgroundImages: [],
+      backgroundAssetsLoaded: false,
       currentBgIndex: 0,
       intervalId: null,
       
@@ -158,7 +146,19 @@ export default {
     
     // 切换背景图片
     changeBackground() {
+      if (!Array.isArray(this.backgroundImages) || this.backgroundImages.length <= 1) {
+        return
+      }
       this.currentBgIndex = (this.currentBgIndex + 1) % this.backgroundImages.length
+    },
+    startBackgroundCarousel() {
+      if (this.intervalId || this.backgroundImages.length <= 1) return
+      this.intervalId = setInterval(this.changeBackground, 3000)
+    },
+    stopBackgroundCarousel() {
+      if (!this.intervalId) return
+      clearInterval(this.intervalId)
+      this.intervalId = null
     },
     preloadImage(src) {
       if (!src) return
@@ -177,23 +177,46 @@ export default {
         return
       }
       setTimeout(run, 300)
+    },
+    async loadBackgroundImages() {
+      if (this.backgroundAssetsLoaded) return
+      const modules = await Promise.all([
+        import('./assets/bg6.png'),
+        import('./assets/bg1.png'),
+        import('./assets/bg2.png'),
+        import('./assets/bg3.png'),
+        import('./assets/bg4.png'),
+        import('./assets/bg5.png')
+      ])
+      this.backgroundImages = modules.map((module) => module.default)
+      this.backgroundAssetsLoaded = true
+      this.currentBgIndex = 0
+    },
+    async initLandingAssets() {
+      await this.loadBackgroundImages()
+      this.startBackgroundCarousel()
+      this.warmupBackgroundImages()
+    }
+  },
+  watch: {
+    '$route.path': {
+      immediate: false,
+      async handler(path) {
+        if (path === '/') {
+          await this.initLandingAssets()
+          return
+        }
+        this.stopBackgroundCarousel()
+      }
     }
   },
   mounted() {
-    // 开始背景图片轮播
-    this.intervalId = setInterval(this.changeBackground, 3000)
-    this.warmupBackgroundImages()
-    
-    // 监听路由变化
-    if (this.$route && this.$route.path !== '/') {
-      this.enterMainPage()
+    if (this.$route && this.$route.path === '/') {
+      this.initLandingAssets()
     }
   },
   beforeUnmount() {
-    // 清理定时器
-    if (this.intervalId) {
-      clearInterval(this.intervalId)
-    }
+    this.stopBackgroundCarousel()
   }
 }
 </script>
