@@ -378,8 +378,8 @@ func buildBaseSystemPrompt(colorCount int) string {
 你是一个专业的配色设计师。用户会给你一个配色需求描述，你需要返回%d个精确的HEX颜色代码，并给出配色使用建议。
 你必须通过调用 return_palette 工具函数返回结果，不要输出任何自然语言文本。
 1. 采用【渐变过渡技巧】，在冲突色之间创建中间色调缓冲层
-2. 运用【色彩比例法则】：主色占60%，次色占30%，点缀色占10%
-3. 建立【色彩秩序】：通过明度阶梯（从20%到80%亮度）建立视觉节奏
+2. 运用【色彩比例法则】：主色占60%%，次色占30%%，点缀色占10%%
+3. 建立【色彩秩序】：通过明度阶梯（从20%%到80%%亮度）建立视觉节奏
 4. 添加【中性调和剂】：适当加入平衡色
 5. 最终效果需呈现【动态和谐】- 既有视觉冲击力，又保持整体统一性
 `, colorCount)
@@ -478,7 +478,7 @@ func buildPaletteToolDefinition(colorCount int) ToolDefinition {
 					},
 					"advice": map[string]interface{}{
 						"type":        "string",
-						"description": "配色使用建议，给出2-3条可执行的使用方式或场景。",
+						"description": "配色使用建议，给出2-3条可执行的使用方式或场景，不要分点，要包含colors中的HEX颜色字符串",
 						"minLength":   6,
 						"maxLength":   200,
 					},
