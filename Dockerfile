@@ -22,7 +22,7 @@ RUN apk add --no-cache \
 	gcc \
 	nasm \
 	pkgconf \
-	python3 \
+	zlib-dev \
 	bash
 
 COPY frontend/package*.json ./
