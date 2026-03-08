@@ -48,4 +48,7 @@ Object.entries(icons).forEach(([name, component]) => {
 })
 
 app.use(router)
-app.mount('#app')
+
+router.isReady().then(() => {
+  app.mount('#app')
+})

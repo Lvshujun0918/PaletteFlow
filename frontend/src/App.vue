@@ -80,6 +80,8 @@ export default {
       backgroundAssetsLoaded: false,
       currentBgIndex: 0,
       intervalId: null,
+      warmupIdleId: null,
+      warmupTimerId: null,
       
       appTitle: 'PaletteFlow',
       appSubtitle: '自然语言生成配色',
@@ -160,6 +162,16 @@ export default {
       clearInterval(this.intervalId)
       this.intervalId = null
     },
+    cancelWarmupTasks() {
+      if (typeof window !== 'undefined' && typeof window.cancelIdleCallback === 'function' && this.warmupIdleId != null) {
+        window.cancelIdleCallback(this.warmupIdleId)
+      }
+      if (this.warmupTimerId != null) {
+        clearTimeout(this.warmupTimerId)
+      }
+      this.warmupIdleId = null
+      this.warmupTimerId = null
+    },
     preloadImage(src) {
       if (!src) return
       const image = new Image()
@@ -167,16 +179,22 @@ export default {
       image.src = src
     },
     warmupBackgroundImages() {
+      this.cancelWarmupTasks()
       const tasks = this.backgroundImages.filter((_, index) => index !== this.currentBgIndex)
       const run = () => {
+        this.warmupIdleId = null
+        this.warmupTimerId = null
+        if (!this.$route || this.$route.path !== '/') {
+          return
+        }
         tasks.forEach((src) => this.preloadImage(src))
       }
 
       if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(run, { timeout: 2000 })
+        this.warmupIdleId = window.requestIdleCallback(run, { timeout: 2000 })
         return
       }
-      setTimeout(run, 300)
+      this.warmupTimerId = setTimeout(run, 300)
     },
     async loadBackgroundImages() {
       if (this.backgroundAssetsLoaded) return
@@ -206,6 +224,7 @@ export default {
           await this.initLandingAssets()
           return
         }
+        this.cancelWarmupTasks()
         this.stopBackgroundCarousel()
       }
     }
@@ -216,6 +235,7 @@ export default {
     }
   },
   beforeUnmount() {
+    this.cancelWarmupTasks()
     this.stopBackgroundCarousel()
   }
 }
