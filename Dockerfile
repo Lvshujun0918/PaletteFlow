@@ -13,6 +13,18 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server .
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
+RUN apk add --no-cache \
+	autoconf \
+	automake \
+	libtool \
+	make \
+	g++ \
+	gcc \
+	nasm \
+	pkgconf \
+	python3 \
+	bash
+
 COPY frontend/package*.json ./
 RUN npm install
 
