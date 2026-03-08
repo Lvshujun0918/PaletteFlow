@@ -1,11 +1,61 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import viteCompression from 'vite-plugin-compression'
+import viteImagemin from 'vite-plugin-imagemin'
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      ...(isProd
+        ? [
+            viteImagemin({
+              gifsicle: {
+                optimizationLevel: 7,
+                interlaced: false
+              },
+              mozjpeg: {
+                quality: 78
+              },
+              pngquant: {
+                quality: [0.7, 0.85],
+                speed: 4
+              },
+              svgo: {
+                plugins: [
+                  {
+                    name: 'removeViewBox',
+                    active: false
+                  },
+                  {
+                    name: 'removeEmptyAttrs',
+                    active: true
+                  }
+                ]
+              },
+              webp: {
+                quality: 78
+              }
+            }),
+            viteCompression({
+              verbose: false,
+              threshold: 1024,
+              algorithm: 'gzip',
+              ext: '.gz',
+              deleteOriginFile: false
+            }),
+            viteCompression({
+              verbose: false,
+              threshold: 1024,
+              algorithm: 'brotliCompress',
+              ext: '.br',
+              deleteOriginFile: false
+            })
+          ]
+        : [])
+    ],
     esbuild: isProd
       ? {
           drop: ['console', 'debugger'],
@@ -14,7 +64,19 @@ export default defineConfig(({ mode }) => {
       : undefined,
     build: {
       target: 'es2018',
-      minify: 'esbuild',
+      minify: isProd ? 'terser' : false,
+      terserOptions: isProd
+        ? {
+            compress: {
+              drop_console: true,
+              drop_debugger: true,
+              passes: 2
+            },
+            format: {
+              comments: false
+            }
+          }
+        : undefined,
       cssMinify: true,
       sourcemap: false,
       reportCompressedSize: true,
