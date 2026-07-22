@@ -25,6 +25,19 @@ WORKDIR /app
 
 RUN apk add --no-cache nginx supervisor
 
+# ---- fix nginx permissions (Alpine nginx defaults to "user nginx;") ----
+# 1) Remove the "user nginx;" directive so nginx runs as root inside the container
+RUN sed -i 's/^user nginx;/# user nginx;/' /etc/nginx/nginx.conf
+
+# 2) Ensure nginx temp/log directories exist and are writable
+RUN mkdir -p /var/lib/nginx/tmp/client_body \
+    /var/lib/nginx/tmp/proxy \
+    /var/lib/nginx/tmp/fastcgi \
+    /var/lib/nginx/tmp/uwsgi \
+    /var/lib/nginx/tmp/scgi \
+    /var/lib/nginx/logs \
+    && chmod -R 755 /var/lib/nginx
+
 # backend
 COPY --from=backend-builder /out/server /app/server
 COPY backend/.env.example /app/.env.example
